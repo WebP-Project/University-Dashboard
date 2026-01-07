@@ -1,5 +1,3 @@
-// --- 1. CONFIGURATION & DATA ---
-const STORAGE_KEY = 'uniEventsData';
 
 // Default data (only used if nothing is in LocalStorage)
 const defaultEvents = [
@@ -9,21 +7,43 @@ const defaultEvents = [
 ];
 
 // Load from LocalStorage OR use default data
-let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultEvents;
+let events = [];
 
-// --- 2. INITIALIZATION ---
-window.onload = function() {
+window.onload = async function() {
+    await loadEventsFromServer(); // Load data from JSON file
     renderEventsTable();
     initCharts();
+
+    // Theme logic remains the same
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.body.setAttribute('data-theme', savedTheme);
 };
 
+async function loadEventsFromServer() {
+    try {
+        const response = await fetch('/api/events');
+        events = await response.json();
+    } catch (error) {
+        console.error("Error loading events:", error);
+        events = defaultEvents; // Fallback
+    }
+}
+
+
+
 // --- 3. HELPER: SAVE DATA ---
-function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-    // Update the "Total Events" count on the dashboard immediately
-    document.getElementById('totalEventsDisplay').innerText = events.length;
+async function saveData() {
+    try {
+        await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(events)
+        });
+        document.getElementById('totalEventsDisplay').innerText = events.length;
+    } catch (error) {
+        console.error("Error saving data:", error);
+        alert("Failed to save to server!");
+    }
 }
 
 // --- 4. NAVIGATION LOGIC ---

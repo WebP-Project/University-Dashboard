@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Tech Symposium",
+    "date": "2023-11-15",
+    "time": "Morning",
+    "venue": "Grand Auditorium",
+    "status": "Confirmed"
+  },
+  {
+    "name": "Basketball Finals",
+    "date": "2023-11-16",
+    "time": "Afternoon",
+    "venue": "Sports Complex",
+    "status": "Confirmed"
+  },
+  {
+    "name": "Literature Fest",
+    "date": "2023-11-20",
+    "time": "Morning",
+    "venue": "Conference Hall A",
+    "status": "Planning"
+  }
+]
