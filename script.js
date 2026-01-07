@@ -15,6 +15,8 @@ let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultEvents;
 window.onload = function() {
     renderEventsTable();
     initCharts();
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', savedTheme);
 };
 
 // --- 3. HELPER: SAVE DATA ---
@@ -185,11 +187,3 @@ function toggleTheme() {
     }
 }
 
-// Check for saved theme on load (Add this to window.onload)
-window.onload = function() {
-    // ... existing initialization code ...
-    
-    // Load Theme
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.body.setAttribute('data-theme', savedTheme);
-};
