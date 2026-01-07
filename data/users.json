@@ -1,14 +1,16 @@
 [
   {
     "id": 1,
-    "username": "admin",
+    "email": "admin@college.edu",
     "password": "admin123", 
-    "role": "admin"
+    "role": "admin",
+    "username": "admin"
   },
   {
     "id": 2,
-    "username": "student_lead",
+    "email": "student@college.edu",
     "password": "securePass1",
-    "role": "editor"
+    "role": "student",
+    "username": "student_lead"
   }
 ]
