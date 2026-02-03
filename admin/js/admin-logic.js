@@ -21,13 +21,13 @@ window.onload = async function() {
 async function loadEventsFromServer() {
     try {
         const response = await fetch('/api/events');
-        events = await response.json();
-        events=data.length>0 ?data:defaultEvents;
-        renderEventsTable;
+        data= await response.json();
+        events=data.length>0 ? data:defaultEvents;
+        renderEventsTable();
     } catch (error) {
         console.error("Error loading events:", error);
         events = defaultEvents;
-        renderEventsTable;// Fallback
+        renderEventsTable();// Fallback
     }
 }
 
@@ -50,6 +50,7 @@ async function saveData() {
 }
 
 // --- 4. NAVIGATION LOGIC ---
+/*
 function showSection(sectionId) {
     const sections = document.querySelectorAll('.section');
     sections.forEach(sec => sec.classList.add('hidden'));
@@ -60,7 +61,7 @@ function showSection(sectionId) {
     document.getElementById(sectionId).classList.remove('hidden');
     event.currentTarget.classList.add('active-nav');
 }
-
+*/
 // --- 5. SCHEDULING LOGIC ---
 const eventForm = document.getElementById('eventForm');
 
@@ -162,6 +163,7 @@ function renderEventsTable() {
     // Update counter
     document.getElementById('totalEventsDisplay').innerText = events.length;
 }
+
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
     document.querySelectorAll('.sidebar li').forEach(item => item.classList.remove('active-nav'));
