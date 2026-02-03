@@ -1,4 +1,6 @@
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+const loginForm=document.getElementById('loginForm');
+if(loginForm){
+    loginForm.addEventListener('submit',async(e) => {
     e.preventDefault();
 
     const email = document.getElementById('email').value;
@@ -19,15 +21,19 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             // If admin, go to admin dash; if student, go to event list 
             window.location.href = data.redirectUrl;
         } else {
-            document.getElementById('message').innerText = data.error;
+            const msgElement = document.getElementById('message');
+            if (msgElement) msgElement.innerText = data.error;
         }
     } catch (err) {
         console.error("Login failed", err);
-    }
-});
+      }
+  });
+}
 
+if(eventGrid){
+    window.addEventListener('DOMContentLoaded', fetchEvents);
+}
 // Run this function when the page loads
-window.addEventListener('DOMContentLoaded', fetchEvents);
 
 async function fetchEvents() {
     try {
@@ -48,19 +54,26 @@ async function fetchEvents() {
             const card = document.createElement('div');
             card.className = 'event-card';
             card.innerHTML = `
-                <h3>${event.name}</h3>
-                <p><strong>Date:</strong> ${event.date}</p>
-                <p><strong>Venue:</strong> ${event.venue}</p>
-                <p>${event.description}</p>
-                <button onclick="registerForEvent('${event.id}')" class="register-btn">
-                    Register Now
-                </button>
+                <div class="event-content">
+                    <h3>${event.name}</h3>
+                    <div class="event-details">
+                        <p><strong>📅 Date:</strong> ${event.date}</p>
+                        <p><strong>⏰ Time:</strong> ${event.time || 'TBA'}</p>
+                        <p><strong>📍 Venue:</strong> ${event.venue}</p>
+                    </div>
+                    <p class="event-desc">${event.description || 'No description provided.'}</p>
+                    <button onclick="registerForEvent('${event.name}')" class="register-btn">
+                        Register Now
+                    </button>
+                </div>
             `;
             grid.appendChild(card);
         });
 
     } catch (err) {
         console.error("Error loading events:", err);
+        const grid = document.getElementById('eventGrid');
+        if (grid) grid.innerHTML = '<p class="error">Unable to load events at this time.</p>';
     }
 }
 

@@ -11,7 +11,6 @@ let events = [];
 
 window.onload = async function() {
     await loadEventsFromServer(); // Load data from JSON file
-    renderEventsTable();
     initCharts();
 
     // Theme logic remains the same
@@ -23,9 +22,12 @@ async function loadEventsFromServer() {
     try {
         const response = await fetch('/api/events');
         events = await response.json();
+        events=data.length>0 ?data:defaultEvents;
+        renderEventsTable;
     } catch (error) {
         console.error("Error loading events:", error);
-        events = defaultEvents; // Fallback
+        events = defaultEvents;
+        renderEventsTable;// Fallback
     }
 }
 
@@ -34,11 +36,12 @@ async function loadEventsFromServer() {
 // --- 3. HELPER: SAVE DATA ---
 async function saveData() {
     try {
-        await fetch('/api/events', {
+        const response= await fetch('/api/events', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(events)
         });
+        if(!response.ok) throw new Error("Server failed to save");
         document.getElementById('totalEventsDisplay').innerText = events.length;
     } catch (error) {
         console.error("Error saving data:", error);
@@ -124,14 +127,12 @@ function editEvent(index) {
 
     // 2. Remove the event from the list (so we don't get duplicates when they save)
     events.splice(index, 1);
-    saveData();
-    renderEventsTable();
 
     // 3. Scroll user back to the form
     document.getElementById('eventForm').scrollIntoView({ behavior: 'smooth' });
-    
-    // Optional: Focus on the name field
     document.getElementById('eventName').focus();
+
+    renderEventsTable();
 }
 
 // --- 7. RENDER TABLE ---
@@ -160,6 +161,13 @@ function renderEventsTable() {
     
     // Update counter
     document.getElementById('totalEventsDisplay').innerText = events.length;
+}
+function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
+    document.querySelectorAll('.sidebar li').forEach(item => item.classList.remove('active-nav'));
+
+    document.getElementById(sectionId).classList.remove('hidden');
+    event.currentTarget.classList.add('active-nav');
 }
 
 // --- 8. CHARTS (Static for now) ---

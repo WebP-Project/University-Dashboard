@@ -19,5 +19,12 @@
     "time": "Morning",
     "venue": "Conference Hall A",
     "status": "Planning"
+  },
+  {
+    "name": "Football",
+    "date": "2026-02-19",
+    "time": "Morning",
+    "venue": "Sports Complex",
+    "status": "Confirmed"
   }
 ]
