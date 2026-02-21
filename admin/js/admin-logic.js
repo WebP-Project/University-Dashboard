@@ -245,48 +245,151 @@ function filterVenue(mode, button) {
     renderVenueUtilization();
 }
 
+function getVenueDateBounds(rangeKey) {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    if (rangeKey === "week") {
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6);
+        return { start, end };
+    }
+
+    if (rangeKey === "month") {
+        const end = new Date(start);
+        end.setDate(end.getDate() + 29);
+        return { start, end };
+    }
+
+    const parsedDates = events
+        .map((ev) => new Date(ev.date))
+        .filter((d) => !Number.isNaN(d.getTime()));
+
+    if (!parsedDates.length) {
+        return { start, end: new Date(start) };
+    }
+
+    const minDate = new Date(Math.min(...parsedDates));
+    const maxDate = new Date(Math.max(...parsedDates));
+    return { start: minDate, end: maxDate };
+}
+
+function isDateInRange(dateText, start, end) {
+    const d = new Date(dateText);
+    if (Number.isNaN(d.getTime())) return false;
+    d.setHours(0, 0, 0, 0);
+    return d >= start && d <= end;
+}
+
+function formatISODate(dateObj) {
+    return dateObj.toISOString().slice(0, 10);
+}
+
 function renderVenueUtilization() {
     const matrix = document.getElementById("venueMatrix");
+    const overview = document.getElementById("venueOverview");
     if (!matrix) return;
 
+    const rangeKey = document.getElementById("venueRange")?.value || "month";
+    const { start, end } = getVenueDateBounds(rangeKey);
+
+    const rangeEvents = events.filter((ev) => isDateInRange(ev.date, start, end));
+    const daysInRange = Math.max(1, Math.floor((end - start) / (24 * 60 * 60 * 1000)) + 1);
+    const totalSlotsPerVenue = daysInRange * timeSlots.length;
+
     const rowData = venues.map((venue) => {
-        const slotData = timeSlots.map((slot) => {
-            const count = events.filter((ev) => ev.venue === venue && ev.time === slot).length;
-            const utilization = Math.min(100, count * 38);
-            return { slot, count, utilization };
+        const venueEvents = rangeEvents.filter((ev) => ev.venue === venue);
+
+        const uniqueBookedSlots = new Set();
+        const slotGroupCount = {};
+        const dayLoads = {};
+
+        venueEvents.forEach((ev) => {
+            const slotKey = `${ev.date}|${ev.time}`;
+            uniqueBookedSlots.add(slotKey);
+            slotGroupCount[slotKey] = (slotGroupCount[slotKey] || 0) + 1;
+            dayLoads[ev.date] = (dayLoads[ev.date] || 0) + 1;
         });
-        const peak = Math.max(...slotData.map((s) => s.utilization));
-        return { venue, slotData, peak };
+
+        const clashCount = Object.values(slotGroupCount).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+        const utilization = Math.round((uniqueBookedSlots.size / totalSlotsPerVenue) * 100);
+
+        const peakEntry = Object.entries(dayLoads).sort((a, b) => b[1] - a[1])[0];
+        const peakDay = peakEntry ? `${peakEntry[0]} (${peakEntry[1]} slots)` : "No bookings";
+
+        return {
+            venue,
+            utilization,
+            clashCount,
+            bookedSlots: uniqueBookedSlots.size,
+            peakDay
+        };
     });
 
     const filtered = rowData.filter((row) => {
-        if (venueFilter === "available") return row.peak < 38;
-        if (venueFilter === "high") return row.peak >= 76;
+        if (venueFilter === "available") return row.utilization <= 20;
+        if (venueFilter === "high") return row.utilization >= 60;
         return true;
     });
+
+    if (overview) {
+        const avgUtil = rowData.length
+            ? Math.round(rowData.reduce((sum, row) => sum + row.utilization, 0) / rowData.length)
+            : 0;
+        const totalClashes = rowData.reduce((sum, row) => sum + row.clashCount, 0);
+        const mostLoaded = [...rowData].sort((a, b) => b.utilization - a.utilization)[0];
+
+        overview.innerHTML = `
+            <div class="card metric-card">
+                <h4>Range Window</h4>
+                <div class="metric-strong">${formatISODate(start)} to ${formatISODate(end)}</div>
+                <p>${daysInRange} day(s) analyzed</p>
+            </div>
+            <div class="card metric-card">
+                <h4>Average Utilization</h4>
+                <div class="metric-strong">${avgUtil}%</div>
+                <p>Booked unique slots over total available slots</p>
+            </div>
+            <div class="card metric-card">
+                <h4>Total Clash Risk</h4>
+                <div class="metric-strong">${totalClashes}</div>
+                <p>Only same venue + same date + same slot counted</p>
+            </div>
+            <div class="card metric-card">
+                <h4>Most Loaded Venue</h4>
+                <div class="metric-strong">${mostLoaded ? mostLoaded.venue : "N/A"}</div>
+                <p>${mostLoaded ? `${mostLoaded.utilization}% utilization` : "No data"}</p>
+            </div>
+        `;
+    }
 
     const header = `
         <div class="matrix-row">
             <div class="matrix-cell cell-head">Venue</div>
-            <div class="matrix-cell cell-head">Morning</div>
-            <div class="matrix-cell cell-head">Afternoon</div>
-            <div class="matrix-cell cell-head">Evening</div>
+            <div class="matrix-cell cell-head">Utilization</div>
+            <div class="matrix-cell cell-head">Booked Slots</div>
+            <div class="matrix-cell cell-head">Clash Risk / Peak Day</div>
         </div>
     `;
 
     const rows = filtered
         .map((row) => {
-            const cells = row.slotData
-                .map((slotData) => {
-                    const cls = slotData.utilization >= 76 ? "occ-high" : slotData.utilization >= 38 ? "occ-mid" : "occ-low";
-                    return `<div class="matrix-cell ${cls}">${slotData.count} event(s)<br>${slotData.utilization}% occupied</div>`;
-                })
-                .join("");
-            return `<div class="matrix-row"><div class="matrix-cell cell-head">${row.venue}</div>${cells}</div>`;
+            const utilClass = row.utilization >= 60 ? "occ-high" : row.utilization >= 30 ? "occ-mid" : "occ-low";
+            return `
+                <div class="matrix-row">
+                    <div class="matrix-cell cell-head">${row.venue}</div>
+                    <div class="matrix-cell ${utilClass}">${row.utilization}%</div>
+                    <div class="matrix-cell">${row.bookedSlots} / ${totalSlotsPerVenue}</div>
+                    <div class="matrix-cell">
+                        Clashes: <strong>${row.clashCount}</strong><br>
+                        Peak: ${row.peakDay}
+                    </div>
+                </div>
+            `;
         })
         .join("");
 
-    matrix.innerHTML = header + (rows || "<div class='matrix-cell'>No venues match this filter.</div>");
+    matrix.innerHTML = header + (rows || "<div class='matrix-cell'>No venues match this filter in selected date range.</div>");
 }
 
 function renderParticipation() {
