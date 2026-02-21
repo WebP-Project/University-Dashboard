@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration Confirmation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="client-body">
+    <header>
+        <nav class="navbar">
+            <h1>CampusEvents</h1>
+            <div class="nav-links">
+                <button id="themeToggleBtn" class="theme-toggle-btn" type="button" aria-label="Toggle theme" title="Toggle theme">
+                    <i class="fas fa-adjust"></i>
+                </button>
+                <span id="welcomeUser">Welcome</span>
+                <a href="client.html" class="filter-btn">Back to Events</a>
+                <a href="login.html" class="logout-link">Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="registrationPage" class="container">
+        <header class="page-header">
+            <h2>Confirm Event Registration</h2>
+            <p>Review event details and submit your registration.</p>
+        </header>
+
+        <div class="register-grid">
+            <section class="event-card register-panel">
+                <h3>Event Details</h3>
+                <div id="registrationEventBox"></div>
+            </section>
+
+            <section class="event-card register-panel">
+                <h3>Your Details</h3>
+                <form id="registrationForm">
+                    <div class="input-group">
+                        <label for="regName">Full Name</label>
+                        <input id="regName" type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="regEmail">Email</label>
+                        <input id="regEmail" type="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="regStudentId">Student ID</label>
+                        <input id="regStudentId" type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="regDepartment">Department</label>
+                        <input id="regDepartment" type="text" required>
+                    </div>
+                    <button class="register-btn" type="submit">Confirm Registration</button>
+                </form>
+                <p id="registrationMessage"></p>
+            </section>
+        </div>
+
+        <section id="registrationSuccess" class="event-card hidden"></section>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
