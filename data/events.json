@@ -28,17 +28,24 @@
     "status": "Confirmed"
   },
   {
-    "name": "Hello",
+    "name": "Annual Debate",
     "date": "2026-02-21",
     "time": "Morning",
     "venue": "Grand Auditorium",
     "status": "Confirmed"
   },
   {
-    "name": "Hello1",
-    "date": "2026-02-21",
-    "time": "Afternoon",
+    "name": "Gen AI Hackathon",
+    "date": "2026-02-22",
+    "time": "Morning",
     "venue": "Grand Auditorium",
-    "status": "Planning"
+    "status": "Confirmed"
+  },
+  {
+    "name": "Gaming Event",
+    "date": "2026-02-25",
+    "time": "Morning",
+    "venue": "Grand Auditorium",
+    "status": "Confirmed"
   }
 ]

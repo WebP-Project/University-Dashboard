@@ -167,15 +167,22 @@
             <section id="venues" class="section hidden">
                 <header class="section-header">
                     <h1>Venue Utilization</h1>
-                    <p>Capacity-aware occupancy matrix for each venue and time slot.</p>
+                    <p>Date-aware venue overview with separate utilization and clash risk metrics.</p>
                 </header>
 
                 <div class="card">
                     <div class="filter-row">
+                        <label for="venueRange">Range</label>
+                        <select id="venueRange" onchange="renderVenueUtilization()">
+                            <option value="week">Next 7 Days</option>
+                            <option value="month" selected>Next 30 Days</option>
+                            <option value="all">All Dates</option>
+                        </select>
                         <button class="chip active-chip" onclick="filterVenue('all', this)">All</button>
                         <button class="chip" onclick="filterVenue('available', this)">Available</button>
                         <button class="chip" onclick="filterVenue('high', this)">High Load</button>
                     </div>
+                    <div id="venueOverview" class="insight-grid"></div>
                     <div id="venueMatrix" class="venue-matrix"></div>
                 </div>
             </section>
