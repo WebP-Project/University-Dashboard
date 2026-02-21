@@ -18,7 +18,7 @@
     "date": "2023-11-20",
     "time": "Morning",
     "venue": "Conference Hall A",
-    "status": "Planning"
+    "status": "Confirmed"
   },
   {
     "name": "Football",
@@ -26,5 +26,19 @@
     "time": "Morning",
     "venue": "Sports Complex",
     "status": "Confirmed"
+  },
+  {
+    "name": "Hello",
+    "date": "2026-02-21",
+    "time": "Morning",
+    "venue": "Grand Auditorium",
+    "status": "Confirmed"
+  },
+  {
+    "name": "Hello1",
+    "date": "2026-02-21",
+    "time": "Afternoon",
+    "venue": "Grand Auditorium",
+    "status": "Planning"
   }
 ]

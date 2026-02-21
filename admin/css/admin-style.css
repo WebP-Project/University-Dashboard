@@ -231,6 +231,10 @@ body {
     background: transparent;
     color: var(--text-main);
 }
+.form-group option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
 
 .btn-primary {
     width: 100%;

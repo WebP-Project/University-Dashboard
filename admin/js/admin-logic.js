@@ -89,7 +89,7 @@ function bindFormHandlers() {
         const clashAlert = document.getElementById("clashAlert");
         const successAlert = document.getElementById("successAlert");
 
-        const isClash = events.some((ev) => ev.date === date && ev.time === time && ev.venue === venue);
+        const isClash = events.some((ev) => ev.status === "Confirmed" &&ev.date === date && ev.time === time && ev.venue === venue);
 
         if (isClash) {
             clashCounter += 1;
@@ -97,7 +97,7 @@ function bindFormHandlers() {
             successAlert.classList.add("hidden");
             setTimeout(() => clashAlert.classList.add("hidden"), 2600);
         } else {
-            events.push({ name, date, time, venue, status: "Confirmed" });
+            events.push({ name, date, time, venue, status: "Planning" });
             await saveData();
             renderEventsTable();
             renderAllInsights();
@@ -443,4 +443,61 @@ function toggleTheme() {
         body.setAttribute("data-theme", "dark");
         localStorage.setItem("theme", "dark");
     }
+}
+// --- 9. EVENT CONFIRMATION LOGIC ---
+const confirmForm = document.getElementById('confirmForm');
+
+if (confirmForm) {
+    confirmForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('confirmName').value.trim();
+        const time = document.getElementById('confirmTime').value;
+        const venue = document.getElementById('confirmVenue').value;
+        const msgBox = document.getElementById('confirmMessage');
+
+        // 1. Find the event that is currently "Planning"
+        const targetIndex = events.findIndex(ev => 
+            ev.name.toLowerCase() === name.toLowerCase() && 
+            ev.time === time && 
+            ev.venue === venue && 
+            ev.status === "Planning"
+        );
+
+        if (targetIndex === -1) {
+            msgBox.className = "alert error";
+            msgBox.innerHTML = "<strong>Error!</strong> No 'Planning' event found matching these details.";
+            msgBox.classList.remove('hidden');
+            setTimeout(() => msgBox.classList.add('hidden'), 4000);
+            return;
+        }
+
+        const eventToConfirm = events[targetIndex];
+
+        // 2. Final Clash Check: Is another event ALREADY confirmed for this Date, Time, and Venue?
+        const isClash = events.some(ev => 
+            ev.status === "Confirmed" && 
+            ev.date === eventToConfirm.date && // Inherits date from the planned event
+            ev.time === eventToConfirm.time && 
+            ev.venue === eventToConfirm.venue
+        );
+
+        if (isClash) {
+            msgBox.className = "alert error";
+            msgBox.innerHTML = "<strong>Clash Detected!</strong> Another event was confirmed for this venue and time while you were planning.";
+            msgBox.classList.remove('hidden');
+        } else {
+            // 3. Success! Upgrade status to Confirmed
+            events[targetIndex].status = "Confirmed";
+            saveData();
+            renderEventsTable();
+            
+            msgBox.className = "alert success";
+            msgBox.innerHTML = "<strong>Success!</strong> Event is now Confirmed.";
+            msgBox.classList.remove('hidden');
+            confirmForm.reset();
+        }
+        
+        setTimeout(() => msgBox.classList.add('hidden'), 4000);
+    });
 }
