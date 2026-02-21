@@ -116,31 +116,24 @@
             <div class="scheduling-layout">
                 <div class="card form-card">
                     <h3>Confirm a Planned Event</h3>
-                    <form id="confirmForm">
-                        <div class="form-group">
-                            <label>Event Name</label>
-                            <input type="text" id="confirmName" required placeholder="e.g. Annual Debate">
-                        </div>
-                        <div class="form-group">
-                            <label>Time Slot</label>
-                            <select id="confirmTime">
-                                <option value="Morning">Morning (9AM - 1PM)</option>
-                                <option value="Afternoon">Afternoon (2PM - 6PM)</option>
-                                <option value="Evening">Evening (7PM - 10PM)</option>
+                   <form id="confirmForm">
+                    <div class="form-group">
+                        <label>Select Planned Event</label>
+                        <select id="confirmEventSelect" required>
+                            <option value="">-- Choose an event to confirm --</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Venue</label>
-                            <select id="confirmVenue">
-                                <option value="Grand Auditorium">Grand Auditorium</option>
-                                <option value="Sports Complex">Sports Complex</option>
-                                <option value="Conference Hall A">Conference Hall A</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn-primary" style="background-color: #22c55e;">Confirm Event</button>
-                    </form>
+                    </div>
 
-                    <div id="confirmMessage" class="alert hidden"></div>
+                    <div id="confirmEventDetails" class="hidden" style="background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #334155;">
+                        <p style="margin-bottom: 8px;"><strong>Date:</strong> <span id="detailDate"></span></p>
+                        <p style="margin-bottom: 8px;"><strong>Time Slot:</strong> <span id="detailTime"></span></p>
+                        <p style="margin: 0;"><strong>Venue:</strong> <span id="detailVenue"></span></p>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="background-color: #22c55e;">Confirm Event</button>
+                </form>
+
+                <div id="confirmMessage" class="alert hidden"></div>
                 </div>
             </div>
             </section>

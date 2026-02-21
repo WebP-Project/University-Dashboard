@@ -47,5 +47,19 @@
     "time": "Morning",
     "venue": "Grand Auditorium",
     "status": "Confirmed"
+  },
+  {
+    "name": "Hackathon",
+    "date": "2026-02-26",
+    "time": "Morning",
+    "venue": "Grand Auditorium",
+    "status": "Planning"
+  },
+  {
+    "name": "Valorant",
+    "date": "2026-02-28",
+    "time": "Morning",
+    "venue": "Grand Auditorium",
+    "status": "Confirmed"
   }
 ]
