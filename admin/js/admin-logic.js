@@ -58,6 +58,7 @@ async function loadEventsFromServer() {
 
     renderEventsTable();
     renderAllInsights();
+    populateConfirmationDropdown();
 }
 
 async function saveData() {
@@ -89,7 +90,7 @@ function bindFormHandlers() {
         const clashAlert = document.getElementById("clashAlert");
         const successAlert = document.getElementById("successAlert");
 
-        const isClash = events.some((ev) => ev.date === date && ev.time === time && ev.venue === venue);
+        const isClash = events.some((ev) => ev.status === "Confirmed" &&ev.date === date && ev.time === time && ev.venue === venue);
 
         if (isClash) {
             clashCounter += 1;
@@ -97,11 +98,11 @@ function bindFormHandlers() {
             successAlert.classList.add("hidden");
             setTimeout(() => clashAlert.classList.add("hidden"), 2600);
         } else {
-            events.push({ name, date, time, venue, status: "Confirmed" });
+            events.push({ name, date, time, venue, status: "Planning" });
             await saveData();
             renderEventsTable();
             renderAllInsights();
-
+            populateConfirmationDropdown();
             successAlert.classList.remove("hidden");
             clashAlert.classList.add("hidden");
             eventForm.reset();
@@ -546,4 +547,91 @@ function toggleTheme() {
         body.setAttribute("data-theme", "dark");
         localStorage.setItem("theme", "dark");
     }
+}
+// --- 9. EVENT CONFIRMATION LOGIC ---
+// --- 9. EVENT CONFIRMATION LOGIC ---
+const confirmForm = document.getElementById('confirmForm');
+const confirmEventSelect = document.getElementById('confirmEventSelect');
+const confirmEventDetails = document.getElementById('confirmEventDetails');
+
+// A. Function to fill the dropdown with "Planning" events
+function populateConfirmationDropdown() {
+    if (!confirmEventSelect) return;
+
+    // Clear old options (keep the default placeholder)
+    confirmEventSelect.innerHTML = '<option value="">-- Choose an event to confirm --</option>';
+    
+    // Loop through events and add them if they are in "Planning" status
+    events.forEach((ev, index) => {
+        if (ev.status === "Planning") {
+            const option = document.createElement('option');
+            // We store the exact array index in the value so we can find it easily later
+            option.value = index; 
+            option.textContent = ev.name;
+            confirmEventSelect.appendChild(option);
+        }
+    });
+}
+
+// B. Show event details when the user selects a dropdown item
+if (confirmEventSelect) {
+    confirmEventSelect.addEventListener('change', function() {
+        const selectedIndex = this.value;
+        
+        if (selectedIndex !== "") {
+            const selectedEvent = events[selectedIndex];
+            document.getElementById('detailDate').textContent = selectedEvent.date;
+            document.getElementById('detailTime').textContent = selectedEvent.time;
+            document.getElementById('detailVenue').textContent = selectedEvent.venue;
+            
+            // Unhide the details box
+            confirmEventDetails.classList.remove('hidden');
+        } else {
+            // Hide if they go back to the default placeholder
+            confirmEventDetails.classList.add('hidden');
+        }
+    });
+}
+
+// C. Handle the Confirmation Submit
+if (confirmForm) {
+    confirmForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const selectedIndex = confirmEventSelect.value;
+        const msgBox = document.getElementById('confirmMessage');
+
+        if (selectedIndex === "") return; // Safety check
+
+        const eventToConfirm = events[selectedIndex];
+
+        // Final Clash Check against Confirmed events only
+        const isClash = events.some(ev => 
+            ev.status === "Confirmed" && 
+            ev.date === eventToConfirm.date && 
+            ev.time === eventToConfirm.time && 
+            ev.venue === eventToConfirm.venue
+        );
+
+        if (isClash) {
+            msgBox.className = "alert error";
+            msgBox.innerHTML = "<strong>Clash Detected!</strong> Another event was confirmed for this venue and time.";
+            msgBox.classList.remove('hidden');
+        } else {
+            // Success! Change status
+            events[selectedIndex].status = "Confirmed";
+            saveData();
+            renderEventsTable();
+            
+            // Refresh the dropdown so the confirmed event disappears from the list
+            populateConfirmationDropdown(); 
+            confirmEventDetails.classList.add('hidden');
+            
+            msgBox.className = "alert success";
+            msgBox.innerHTML = `<strong>Success!</strong> ${eventToConfirm.name} is now Confirmed.`;
+            msgBox.classList.remove('hidden');
+        }
+        
+        setTimeout(() => msgBox.classList.add('hidden'), 4000);
+    });
 }
