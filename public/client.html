@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Events</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="client-body">
     <header>
         <nav class="navbar">
             <h1>CampusEvents</h1>
             <div class="nav-links">
-                <span>Welcome, Student</span>
+                <button id="themeToggleBtn" class="theme-toggle-btn" type="button" aria-label="Toggle theme" title="Toggle theme">
+                    <i class="fas fa-adjust"></i>
+                </button>
+                <span id="welcomeUser">Welcome</span>
                 <a href="login.html" class="logout-link">Logout</a>
             </div>
         </nav>
@@ -19,9 +23,16 @@
 
     <div class="container">
         <header class="page-header">
-            <h2>Upcoming Events</h2>
+            <h2 id="eventsHeading">All Events</h2>
             <p>Discover and register for university workshops, seminars, and fests.</p>
         </header>
+
+        <div class="filter-bar">
+            <button class="filter-btn active-filter" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+            <button class="filter-btn" data-filter="ongoing">Ongoing</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
 
         <div id="eventGrid" class="event-grid">
             <p>Loading events...</p>

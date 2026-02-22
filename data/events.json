@@ -4,62 +4,55 @@
     "date": "2023-11-15",
     "time": "Morning",
     "venue": "Grand Auditorium",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "A campus-wide technology showcase with student innovations, talks, and prototype demos."
   },
   {
     "name": "Basketball Finals",
     "date": "2023-11-16",
     "time": "Afternoon",
     "venue": "Sports Complex",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Championship match between top college teams with live commentary and audience engagement."
   },
   {
     "name": "Literature Fest",
     "date": "2023-11-20",
     "time": "Morning",
     "venue": "Conference Hall A",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Poetry slams, book discussions, and author sessions celebrating literature and creative writing."
   },
   {
     "name": "Football",
     "date": "2026-02-19",
     "time": "Morning",
     "venue": "Sports Complex",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Inter-department football fixtures focused on teamwork, fitness, and competitive spirit."
   },
   {
     "name": "Annual Debate",
     "date": "2026-02-21",
     "time": "Morning",
     "venue": "Grand Auditorium",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Formal debate event where student teams argue contemporary academic and social topics."
   },
   {
     "name": "Gen AI Hackathon",
     "date": "2026-02-22",
     "time": "Morning",
     "venue": "Grand Auditorium",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Build-and-pitch hackathon focused on generative AI tools, responsible use, and real-world use cases."
   },
   {
     "name": "Gaming Event",
     "date": "2026-02-25",
     "time": "Morning",
     "venue": "Grand Auditorium",
-    "status": "Confirmed"
-  },
-  {
-    "name": "Hackathon",
-    "date": "2026-02-26",
-    "time": "Morning",
-    "venue": "Grand Auditorium",
-    "status": "Planning"
-  },
-  {
-    "name": "Valorant",
-    "date": "2026-02-28",
-    "time": "Morning",
-    "venue": "Grand Auditorium",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Casual and competitive gaming sessions including multiplayer tournaments and team challenges."
   }
 ]
