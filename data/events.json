@@ -53,13 +53,20 @@
     "date": "2026-02-26",
     "time": "Morning",
     "venue": "Grand Auditorium",
-    "status": "Planning"
+    "status": "Confirmed"
   },
   {
     "name": "Valorant",
     "date": "2026-02-28",
     "time": "Morning",
     "venue": "Grand Auditorium",
+    "status": "Confirmed"
+  },
+  {
+    "name": "MC",
+    "date": "2026-02-28",
+    "time": "Morning",
+    "venue": "Sports Complex",
     "status": "Confirmed"
   }
 ]
