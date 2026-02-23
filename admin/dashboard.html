@@ -20,7 +20,8 @@
             </div>
 
             <ul>
-                <li onclick="showSection('scheduling', this)" class="active-nav"><i class="fas fa-calendar-check"></i> Event Scheduling</li>
+                <li onclick="showSection('scheduling', this)" class="active-nav"><i class="fas fa-calendar-check"></i> Event Planning</li>
+                <li onclick="showSection('confirmation')"><i class="fas fa-check-circle"></i> Event Confirmation</li>
                 <li onclick="showSection('budget', this)"><i class="fas fa-wallet"></i> Budget Allocation</li>
                 <li onclick="showSection('venues', this)"><i class="fas fa-building"></i> Venue Utilization</li>
                 <li onclick="showSection('participation', this)"><i class="fas fa-users"></i> Participation Analysis</li>
@@ -79,14 +80,14 @@
                                     <option value="Conference Hall A">Conference Hall A</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn-primary">Check Availability and Book</button>
+                            <button type="submit" class="btn-primary">Plan an Event</button>
                         </form>
 
                         <div id="clashAlert" class="alert error hidden">
                             <strong>Clash Detected!</strong> This venue is already booked for the selected slot.
                         </div>
                         <div id="successAlert" class="alert success hidden">
-                            <strong>Success!</strong> Event scheduled successfully.
+                            <strong>Success!</strong> Event Planned.
                         </div>
                     </div>
 
@@ -106,7 +107,36 @@
                     </div>
                 </div>
             </section>
+            <section id="confirmation" class="section hidden">
+            <header>
+                <h1>Event Confirmation</h1>
+                <p style="color: var(--text-muted); margin-top: 5px;">Confirm planned events to officially book the venue.</p>
+            </header>
 
+            <div class="scheduling-layout">
+                <div class="card form-card">
+                    <h3>Confirm a Planned Event</h3>
+                   <form id="confirmForm">
+                    <div class="form-group">
+                        <label>Select Planned Event</label>
+                        <select id="confirmEventSelect" required>
+                            <option value="">-- Choose an event to confirm --</option>
+                            </select>
+                    </div>
+
+                    <div id="confirmEventDetails" class="hidden" style="background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #334155;">
+                        <p style="margin-bottom: 8px;"><strong>Date:</strong> <span id="detailDate"></span></p>
+                        <p style="margin-bottom: 8px;"><strong>Time Slot:</strong> <span id="detailTime"></span></p>
+                        <p style="margin: 0;"><strong>Venue:</strong> <span id="detailVenue"></span></p>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="background-color: #22c55e;">Confirm Event</button>
+                </form>
+
+                <div id="confirmMessage" class="alert hidden"></div>
+                </div>
+            </div>
+            </section>
             <section id="budget" class="section hidden">
                 <header class="section-header">
                     <h1>Budget Allocation</h1>
