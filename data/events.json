@@ -54,5 +54,12 @@
     "venue": "Grand Auditorium",
     "status": "Confirmed",
     "description": "Casual and competitive gaming sessions including multiplayer tournaments and team challenges."
+  },
+  {
+    "name": "Valorant",
+    "date": "2026-02-23",
+    "time": "Morning",
+    "venue": "Conference Hall A",
+    "status": "Confirmed"
   }
 ]
