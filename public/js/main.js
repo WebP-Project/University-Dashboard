@@ -8,6 +8,8 @@ const registrationForm = document.getElementById('registrationForm');
 const registrationEventBox = document.getElementById('registrationEventBox');
 const registrationMessage = document.getElementById('registrationMessage');
 const registrationSuccess = document.getElementById('registrationSuccess');
+const profileToggleBtn = document.getElementById('profileToggleBtn');
+const profilePanel = document.getElementById('profilePanel');
 
 let allClientEvents = [];
 let currentEventFilter = 'all';
@@ -20,6 +22,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', toggleClientTheme);
     }
+
+    bindProfilePanel();
 
     if (loginForm) {
         bindLogin();
@@ -97,6 +101,12 @@ async function loadCurrentUser() {
         const user = await res.json();
         const welcome = document.getElementById('welcomeUser');
         if (welcome) welcome.textContent = `Welcome, ${user.username}`;
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileRole = document.getElementById('profileRole');
+        if (profileName) profileName.textContent = user.username || '-';
+        if (profileEmail) profileEmail.textContent = user.email || '-';
+        if (profileRole) profileRole.textContent = user.role || '-';
         return user;
     } catch (err) {
         console.error('Error loading user session', err);
@@ -292,16 +302,20 @@ function prefillRegistrationUser() {
     if (emailInput) emailInput.value = currentUser.email || '';
 }
 
-function readRegistrations() {
-    try {
-        return JSON.parse(localStorage.getItem('eventRegistrations') || '[]');
-    } catch (err) {
-        return [];
-    }
-}
+function bindProfilePanel() {
+    if (!profileToggleBtn || !profilePanel) return;
 
-function writeRegistrations(registrations) {
-    localStorage.setItem('eventRegistrations', JSON.stringify(registrations));
+    profileToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profilePanel.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (profilePanel.classList.contains('hidden')) return;
+        if (!profilePanel.contains(e.target) && !profileToggleBtn.contains(e.target)) {
+            profilePanel.classList.add('hidden');
+        }
+    });
 }
 
 function setRegistrationMessage(text, type) {
@@ -325,25 +339,6 @@ function handleRegistrationSubmit(e) {
     const regDepartment = document.getElementById('regDepartment')?.value.trim() || '';
 
     const eventId = getEventId(selectedRegistrationEvent);
-    const registrations = readRegistrations();
-
-    const duplicate = registrations.find((item) => item.userEmail === regEmail && item.eventId === eventId);
-    if (duplicate) {
-        setRegistrationMessage('You are already registered for this event.', 'error');
-        return;
-    }
-
-    const clash = registrations.find(
-        (item) =>
-            item.userEmail === regEmail &&
-            item.date === selectedRegistrationEvent.date &&
-            item.time === (selectedRegistrationEvent.time || 'TBA')
-    );
-    if (clash) {
-        setRegistrationMessage(`Clash detected: you already registered for "${clash.eventName}" in this slot.`, 'error');
-        return;
-    }
-
     const registration = {
         eventId,
         eventName: selectedRegistrationEvent.name,
@@ -357,25 +352,54 @@ function handleRegistrationSubmit(e) {
         registeredAt: new Date().toISOString()
     };
 
-    registrations.push(registration);
-    writeRegistrations(registrations);
+    submitRegistration(registration);
+}
 
-    setRegistrationMessage('Registration confirmed successfully.', 'success');
+async function submitRegistration(registration) {
+    try {
+        const response = await fetch('/api/registrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(registration)
+        });
 
-    if (registrationSuccess) {
-        registrationSuccess.classList.remove('hidden');
-        registrationSuccess.innerHTML = `
-            <h3>Registration Confirmed</h3>
-            <p><strong>Name:</strong> ${registration.userName}</p>
-            <p><strong>Email:</strong> ${registration.userEmail}</p>
-            <p><strong>Student ID:</strong> ${registration.studentId}</p>
-            <p><strong>Department:</strong> ${registration.department}</p>
-            <hr>
-            <p><strong>Event:</strong> ${registration.eventName}</p>
-            <p><strong>Date:</strong> ${registration.date}</p>
-            <p><strong>Time:</strong> ${registration.time}</p>
-            <p><strong>Venue:</strong> ${registration.venue}</p>
-        `;
+        const raw = await response.text();
+        let data = {};
+        try {
+            data = raw ? JSON.parse(raw) : {};
+        } catch (parseErr) {
+            data = {};
+        }
+
+        if (!response.ok) {
+            const fallbackMessage =
+                response.status === 404
+                    ? 'Registration API not found. Restart the server to load latest routes.'
+                    : `Registration failed (HTTP ${response.status}).`;
+            setRegistrationMessage(data.error || fallbackMessage, 'error');
+            return;
+        }
+
+        setRegistrationMessage('Registration confirmed successfully.', 'success');
+
+        if (registrationSuccess) {
+            registrationSuccess.classList.remove('hidden');
+            registrationSuccess.innerHTML = `
+                <h3>Registration Confirmed</h3>
+                <p><strong>Name:</strong> ${registration.userName}</p>
+                <p><strong>Email:</strong> ${registration.userEmail}</p>
+                <p><strong>Student ID:</strong> ${registration.studentId}</p>
+                <p><strong>Department:</strong> ${registration.department}</p>
+                <hr>
+                <p><strong>Event:</strong> ${registration.eventName}</p>
+                <p><strong>Date:</strong> ${registration.date}</p>
+                <p><strong>Time:</strong> ${registration.time}</p>
+                <p><strong>Venue:</strong> ${registration.venue}</p>
+            `;
+        }
+    } catch (err) {
+        console.error('Registration submit failed', err);
+        setRegistrationMessage('Registration failed. Please try again.', 'error');
     }
 }
 

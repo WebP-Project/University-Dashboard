@@ -15,11 +15,19 @@
                 <button id="themeToggleBtn" class="theme-toggle-btn" type="button" aria-label="Toggle theme" title="Toggle theme">
                     <i class="fas fa-adjust"></i>
                 </button>
+                <button id="profileToggleBtn" class="theme-toggle-btn" type="button" aria-label="Profile" title="Profile">
+                    <i class="fas fa-user-circle"></i>
+                </button>
                 <span id="welcomeUser">Welcome</span>
                 <a href="client.html" class="filter-btn">Back to Events</a>
                 <a href="login.html" class="logout-link">Logout</a>
             </div>
         </nav>
+        <div id="profilePanel" class="profile-panel hidden">
+            <p><strong>Name:</strong> <span id="profileName">-</span></p>
+            <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
+            <p><strong>Role:</strong> <span id="profileRole">-</span></p>
+        </div>
     </header>
 
     <main id="registrationPage" class="container">

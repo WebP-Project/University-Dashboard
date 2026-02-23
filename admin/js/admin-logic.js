@@ -1,13 +1,35 @@
 const defaultEvents = [
-    { name: "Tech Symposium", date: "2026-03-12", time: "Morning", venue: "Grand Auditorium", status: "Confirmed" },
-    { name: "Basketball Finals", date: "2026-03-14", time: "Afternoon", venue: "Sports Complex", status: "Confirmed" },
-    { name: "Literature Fest", date: "2026-03-18", time: "Evening", venue: "Conference Hall A", status: "Planning" }
+    {
+        name: "Tech Symposium",
+        date: "2026-03-12",
+        time: "Morning",
+        venue: "Grand Auditorium",
+        status: "Confirmed",
+        description: "A university-wide technology showcase with student innovations and expert sessions."
+    },
+    {
+        name: "Basketball Finals",
+        date: "2026-03-14",
+        time: "Afternoon",
+        venue: "Sports Complex",
+        status: "Confirmed",
+        description: "Championship game featuring top college teams and live audience engagement."
+    },
+    {
+        name: "Literature Fest",
+        date: "2026-03-18",
+        time: "Evening",
+        venue: "Conference Hall A",
+        status: "Planning",
+        description: "Literary activities including poetry, talks, and student-led book discussions."
+    }
 ];
 
 const venues = ["Grand Auditorium", "Sports Complex", "Conference Hall A"];
 const timeSlots = ["Morning", "Afternoon", "Evening"];
 
 let events = [];
+let registrations = [];
 let clashCounter = 0;
 let venueFilter = "all";
 
@@ -22,7 +44,9 @@ window.onload = async function () {
     const dateInput = document.getElementById("eventDate");
     if (dateInput) dateInput.valueAsDate = new Date();
 
+    setupAdminSessionUI();
     await loadEventsFromServer();
+    await loadRegistrationsFromServer();
     bindFormHandlers();
 };
 
@@ -30,35 +54,126 @@ function hashText(text) {
     return text.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
 }
 
-function eventMetrics(event, index) {
+function getEventId(event) {
+    return `${event.name}|${event.date}|${event.time || "TBA"}|${event.venue}`;
+}
+
+function getRegistrationCountMap() {
+    const map = {};
+    registrations.forEach((reg) => {
+        map[reg.eventId] = (map[reg.eventId] || 0) + 1;
+    });
+    return map;
+}
+
+function eventMetrics(event, index, registrationMap) {
     const seed = hashText(event.name) + index * 13;
-    const registrations = 120 + (seed % 320);
-    const attendance = Math.min(registrations, Math.floor(registrations * (0.58 + (seed % 23) / 100)));
-    const engagement = Math.round((attendance / Math.max(1, registrations)) * 100);
+    const eventId = getEventId(event);
+    const realRegistrations = registrationMap[eventId] || 0;
+    const baselineRegistrations = 120 + (seed % 320);
+    const registrationsCount = baselineRegistrations + realRegistrations;
+    const attendance = Math.min(registrationsCount, Math.floor(registrationsCount * (0.68 + (seed % 12) / 100)));
+    const engagement = Math.round((attendance / Math.max(1, registrationsCount)) * 100);
     const budgetNeed = 3000 + (seed % 7000);
     const categories = ["Marketing", "Logistics", "Security", "Hospitality"];
     const category = categories[index % categories.length];
 
-    return { registrations, attendance, engagement, budgetNeed, category };
+    return { registrations: registrationsCount, attendance, engagement, budgetNeed, category };
 }
 
 function getAnalyticsEvents() {
-    return events.map((ev, idx) => ({ ...ev, ...eventMetrics(ev, idx) }));
+    const registrationMap = getRegistrationCountMap();
+    return events.map((ev, idx) => ({ ...ev, ...eventMetrics(ev, idx, registrationMap) }));
+}
+
+function ensureEventDescriptions(eventList) {
+    return eventList.map((ev) => ({
+        ...ev,
+        description: (ev.description && ev.description.trim()) || `Details for ${ev.name}.`
+    }));
 }
 
 async function loadEventsFromServer() {
     try {
         const response = await fetch("/api/events");
         const data = await response.json();
-        events = Array.isArray(data) && data.length ? data : defaultEvents;
+        events = ensureEventDescriptions(Array.isArray(data) && data.length ? data : defaultEvents);
     } catch (error) {
         console.error("Error loading events:", error);
-        events = defaultEvents;
+        events = ensureEventDescriptions(defaultEvents);
     }
 
     renderEventsTable();
     renderAllInsights();
     populateConfirmationDropdown();
+}
+
+async function loadRegistrationsFromServer() {
+    try {
+        const response = await fetch("/api/registrations");
+        const data = await response.json();
+        registrations = Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error("Error loading registrations:", error);
+        registrations = [];
+    }
+    renderAllInsights();
+}
+
+async function setupAdminSessionUI() {
+    bindAdminProfilePanel();
+    bindAdminLogout();
+    try {
+        const res = await fetch("/api/me");
+        if (!res.ok) {
+            window.location.href = "/login.html";
+            return;
+        }
+        const user = await res.json();
+        const nameEl = document.getElementById("adminProfileName");
+        const emailEl = document.getElementById("adminProfileEmail");
+        const roleEl = document.getElementById("adminProfileRole");
+        const topNameEl = document.getElementById("adminTopName");
+        if (nameEl) nameEl.textContent = user.username || "-";
+        if (emailEl) emailEl.textContent = user.email || "-";
+        if (roleEl) roleEl.textContent = user.role || "-";
+        if (topNameEl) topNameEl.textContent = user.username || "Admin";
+    } catch (err) {
+        console.error("Failed to load admin profile", err);
+        window.location.href = "/login.html";
+    }
+}
+
+function bindAdminProfilePanel() {
+    const toggle = document.getElementById("adminProfileToggle");
+    const panel = document.getElementById("adminProfilePanel");
+    if (!toggle || !panel) return;
+
+    toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        panel.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (panel.classList.contains("hidden")) return;
+        if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+            panel.classList.add("hidden");
+        }
+    });
+}
+
+function bindAdminLogout() {
+    const logoutBtn = document.getElementById("adminLogoutBtn");
+    if (!logoutBtn) return;
+
+    logoutBtn.addEventListener("click", async () => {
+        try {
+            await fetch("/api/logout", { method: "POST" });
+        } catch (err) {
+            console.error("Admin logout failed", err);
+        }
+        window.location.href = "/login.html";
+    });
 }
 
 async function saveData() {
@@ -86,7 +201,8 @@ function bindFormHandlers() {
         const date = document.getElementById("eventDate").value;
         const time = document.getElementById("eventTime").value;
         const venue = document.getElementById("eventVenue").value;
-
+        const descriptionInput = document.getElementById("eventDescription");
+        const description = descriptionInput?.value.trim() || `Details for ${name}.`;
         const clashAlert = document.getElementById("clashAlert");
         const successAlert = document.getElementById("successAlert");
 
@@ -98,7 +214,7 @@ function bindFormHandlers() {
             successAlert.classList.add("hidden");
             setTimeout(() => clashAlert.classList.add("hidden"), 2600);
         } else {
-            events.push({ name, date, time, venue, status: "Planning" });
+            events.push({ name, date, time, venue, description, status: "Planning" });
             await saveData();
             renderEventsTable();
             renderAllInsights();
@@ -132,7 +248,7 @@ function renderEventsTable() {
     events.forEach((event, index) => {
         const row = `
             <tr>
-                <td><strong>${event.name}</strong></td>
+                <td><strong class="event-name-text" title="${event.name}">${event.name}</strong></td>
                 <td>${event.date} (${event.time})</td>
                 <td>${event.venue}</td>
                 <td>
@@ -170,6 +286,7 @@ function showSection(sectionId, navItem) {
 
     document.getElementById(sectionId).classList.remove("hidden");
     if (navItem) navItem.classList.add("active-nav");
+    if (sectionId === "participation") loadRegistrationsFromServer();
 }
 
 function updateSchedulingKpis() {
@@ -200,6 +317,19 @@ function renderBudget() {
         spent[ev.category] += ev.budgetNeed;
     });
 
+    const spentPct = categories.map((c) => {
+        const pct = Math.round((spent[c] / allocated[c]) * 100);
+        return Math.min(100, pct);
+    });
+
+    const remainingPct = categories.map((c) => {
+        const remaining = Math.max(0, allocated[c] - spent[c]);
+        return Math.round((remaining / allocated[c]) * 100);
+    });
+
+    const allocatedValues = categories.map((c) => allocated[c]);
+    const spentValues = categories.map((c) => spent[c]);
+
     const cards = document.getElementById("budgetCards");
     if (cards) {
         cards.innerHTML = categories
@@ -223,15 +353,45 @@ function renderBudget() {
     if (budgetCtx) {
         if (budgetChartRef) budgetChartRef.destroy();
         budgetChartRef = new Chart(budgetCtx, {
-            type: "doughnut",
+            type: "bar",
             data: {
                 labels: categories,
-                datasets: [{
-                    data: categories.map((c) => allocated[c]),
-                    backgroundColor: ["#0f766e", "#3b82f6", "#d97706", "#7c3aed"]
-                }]
+                datasets: [
+                    {
+                        label: "Spent %",
+                        data: spentPct,
+                        backgroundColor: "#0f766e"
+                    },
+                    {
+                        label: "Remaining %",
+                        data: remainingPct,
+                        backgroundColor: "#cbd5e1"
+                    }
+                ]
             },
-            options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+            options: {
+                responsive: true,
+                indexAxis: "y",
+                scales: {
+                    x: {
+                        stacked: true,
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            callback: (value) => `${value}%`
+                        }
+                    },
+                    y: { stacked: true }
+                },
+                plugins: {
+                    legend: { position: "bottom" },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}%`
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -242,15 +402,35 @@ function renderBudget() {
             type: "bar",
             data: {
                 labels: categories,
-                datasets: [{
-                    label: "Spent",
-                    data: categories.map((c) => spent[c]),
-                    backgroundColor: "#0f766e"
-                }]
+                datasets: [
+                    {
+                        label: "Allocated ($)",
+                        data: allocatedValues,
+                        backgroundColor: "#94a3b8"
+                    },
+                    {
+                        label: "Spent ($)",
+                        data: spentValues,
+                        backgroundColor: "#0f766e"
+                    }
+                ]
             },
             options: {
                 responsive: true,
-                scales: { y: { beginAtZero: true } }
+                scales: {
+                    y: { beginAtZero: true },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: "bottom" },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}`
+                        }
+                    }
+                }
             }
         });
     }
@@ -303,6 +483,12 @@ function formatISODate(dateObj) {
     return dateObj.toISOString().slice(0, 10);
 }
 
+function parseEventDate(dateText) {
+    const [year, month, day] = (dateText || "").split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+}
+
 function renderVenueUtilization() {
     const matrix = document.getElementById("venueMatrix");
     const overview = document.getElementById("venueOverview");
@@ -313,40 +499,44 @@ function renderVenueUtilization() {
 
     const rangeEvents = events.filter((ev) => isDateInRange(ev.date, start, end));
     const daysInRange = Math.max(1, Math.floor((end - start) / (24 * 60 * 60 * 1000)) + 1);
-    const totalSlotsPerVenue = daysInRange * timeSlots.length;
 
     const rowData = venues.map((venue) => {
         const venueEvents = rangeEvents.filter((ev) => ev.venue === venue);
 
-        const uniqueBookedSlots = new Set();
         const slotGroupCount = {};
         const dayLoads = {};
 
         venueEvents.forEach((ev) => {
             const slotKey = `${ev.date}|${ev.time}`;
-            uniqueBookedSlots.add(slotKey);
             slotGroupCount[slotKey] = (slotGroupCount[slotKey] || 0) + 1;
             dayLoads[ev.date] = (dayLoads[ev.date] || 0) + 1;
         });
 
         const clashCount = Object.values(slotGroupCount).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
-        const utilization = Math.round((uniqueBookedSlots.size / totalSlotsPerVenue) * 100);
+        const totalEvents = venueEvents.length;
+        const avgPerDay = Number((totalEvents / daysInRange).toFixed(2));
+        const utilization = Math.round((avgPerDay / timeSlots.length) * 100);
+        const activeDays = Object.keys(dayLoads).length;
 
         const peakEntry = Object.entries(dayLoads).sort((a, b) => b[1] - a[1])[0];
-        const peakDay = peakEntry ? `${peakEntry[0]} (${peakEntry[1]} slots)` : "No bookings";
+        const peakDay = peakEntry ? peakEntry[0] : "N/A";
+        const peakPerDay = peakEntry ? peakEntry[1] : 0;
 
         return {
             venue,
             utilization,
             clashCount,
-            bookedSlots: uniqueBookedSlots.size,
-            peakDay
+            totalEvents,
+            avgPerDay,
+            activeDays,
+            peakDay,
+            peakPerDay
         };
     });
 
     const filtered = rowData.filter((row) => {
-        if (venueFilter === "available") return row.utilization <= 20;
-        if (venueFilter === "high") return row.utilization >= 60;
+        if (venueFilter === "available") return row.avgPerDay <= 0.6;
+        if (venueFilter === "high") return row.avgPerDay >= 1.5;
         return true;
     });
 
@@ -355,7 +545,7 @@ function renderVenueUtilization() {
             ? Math.round(rowData.reduce((sum, row) => sum + row.utilization, 0) / rowData.length)
             : 0;
         const totalClashes = rowData.reduce((sum, row) => sum + row.clashCount, 0);
-        const mostLoaded = [...rowData].sort((a, b) => b.utilization - a.utilization)[0];
+        const mostLoaded = [...rowData].sort((a, b) => b.avgPerDay - a.avgPerDay)[0];
 
         overview.innerHTML = `
             <div class="card metric-card">
@@ -364,9 +554,9 @@ function renderVenueUtilization() {
                 <p>${daysInRange} day(s) analyzed</p>
             </div>
             <div class="card metric-card">
-                <h4>Average Utilization</h4>
+                <h4>Average Utilization / Day</h4>
                 <div class="metric-strong">${avgUtil}%</div>
-                <p>Booked unique slots over total available slots</p>
+                <p>Based on average events per day per venue</p>
             </div>
             <div class="card metric-card">
                 <h4>Total Clash Risk</h4>
@@ -376,7 +566,7 @@ function renderVenueUtilization() {
             <div class="card metric-card">
                 <h4>Most Loaded Venue</h4>
                 <div class="metric-strong">${mostLoaded ? mostLoaded.venue : "N/A"}</div>
-                <p>${mostLoaded ? `${mostLoaded.utilization}% utilization` : "No data"}</p>
+                <p>${mostLoaded ? `${mostLoaded.avgPerDay} events/day` : "No data"}</p>
             </div>
         `;
     }
@@ -384,9 +574,9 @@ function renderVenueUtilization() {
     const header = `
         <div class="matrix-row">
             <div class="matrix-cell cell-head">Venue</div>
-            <div class="matrix-cell cell-head">Utilization</div>
-            <div class="matrix-cell cell-head">Booked Slots</div>
-            <div class="matrix-cell cell-head">Clash Risk / Peak Day</div>
+            <div class="matrix-cell cell-head">Avg Events / Day</div>
+            <div class="matrix-cell cell-head">Active Days</div>
+            <div class="matrix-cell cell-head">Peak Day / Clashes</div>
         </div>
     `;
 
@@ -396,11 +586,11 @@ function renderVenueUtilization() {
             return `
                 <div class="matrix-row">
                     <div class="matrix-cell cell-head">${row.venue}</div>
-                    <div class="matrix-cell ${utilClass}">${row.utilization}%</div>
-                    <div class="matrix-cell">${row.bookedSlots} / ${totalSlotsPerVenue}</div>
+                    <div class="matrix-cell ${utilClass}">${row.avgPerDay} (${row.utilization}%)</div>
+                    <div class="matrix-cell">${row.activeDays} / ${daysInRange} days</div>
                     <div class="matrix-cell">
-                        Clashes: <strong>${row.clashCount}</strong><br>
-                        Peak: ${row.peakDay}
+                        Peak: <strong>${row.peakDay}</strong> (${row.peakPerDay} events)<br>
+                        Clashes: <strong>${row.clashCount}</strong>
                     </div>
                 </div>
             `;
@@ -490,56 +680,53 @@ function renderPerformance() {
 }
 
 function renderPlanning() {
-    const analytics = getAnalyticsEvents();
     const planningGrid = document.getElementById("planningGrid");
     if (!planningGrid) return;
 
-    const venueLoads = venues.map((venue) => ({
-        venue,
-        load: events.filter((ev) => ev.venue === venue).length
-    }));
-    const recommendedVenue = venueLoads.sort((a, b) => a.load - b.load)[0]?.venue || "Conference Hall A";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    const plannedEvents = events
+        .filter((ev) => ev.status === "Planning")
+        .filter((ev) => {
+            const parsed = parseEventDate(ev.date);
+            return parsed && parsed >= today;
+        })
+        .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date));
+
+    if (!plannedEvents.length) {
+        planningGrid.innerHTML = `
+            <div class="card metric-card">
+                <h4>No Planned Events</h4>
+                <p class="metric-line">Create events in Event Planning to populate this section with real planning data.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const analytics = getAnalyticsEvents();
     const avgAtt = analytics.length
         ? Math.round(analytics.reduce((sum, ev) => sum + ev.attendance, 0) / analytics.length)
         : 200;
 
-    const avgBudget = analytics.length
-        ? Math.round(analytics.reduce((sum, ev) => sum + ev.budgetNeed, 0) / analytics.length)
-        : 5000;
-
-    const recommendations = [
-        {
-            title: "Innovation Summit 2026",
-            detail: `Projected attendance: ${avgAtt + 45} | Suggested slot: Morning`,
-            sub: `Recommended venue: ${recommendedVenue}`,
-            confidence: 82
-        },
-        {
-            title: "Cultural Week Launch",
-            detail: `Projected budget: $${(avgBudget + 1200).toLocaleString()} | Suggested slot: Evening`,
-            sub: "Higher engagement expected with club collaborations",
-            confidence: 76
-        },
-        {
-            title: "Career Expo",
-            detail: `Projected attendance: ${avgAtt + 90} | Suggested slot: Afternoon`,
-            sub: "Use multi-zone setup for smoother crowd flow",
-            confidence: 88
-        }
-    ];
-
-    planningGrid.innerHTML = recommendations
+    planningGrid.innerHTML = plannedEvents
         .map(
-            (rec) => `
+            (ev, idx) => {
+                const projectedAttendance = avgAtt + 20 + idx * 15;
+                const estimatedBudget = 4200 + idx * 850;
+                const confidence = Math.max(60, 88 - idx * 5);
+                return `
             <div class="card metric-card">
-                <h4>${rec.title}</h4>
-                <p class="metric-line">${rec.detail}</p>
-                <p class="metric-line">${rec.sub}</p>
-                <div class="metric-line"><span>Confidence</span><strong class="metric-strong">${rec.confidence}%</strong></div>
-                <div class="progress"><span style="width:${rec.confidence}%"></span></div>
+                <h4>${ev.name}</h4>
+                <p class="metric-line">Scheduled: ${ev.date} (${ev.time})</p>
+                <p class="metric-line">Venue: ${ev.venue}</p>
+                <p class="metric-line">Projected attendance: ${projectedAttendance}</p>
+                <p class="metric-line">Estimated budget: $${estimatedBudget.toLocaleString()}</p>
+                <div class="metric-line"><span>Planning Confidence</span><strong class="metric-strong">${confidence}%</strong></div>
+                <div class="progress"><span style="width:${confidence}%"></span></div>
             </div>
-        `
+        `;
+            }
         )
         .join("");
 }
@@ -565,7 +752,6 @@ function toggleTheme() {
         localStorage.setItem("theme", "dark");
     }
 }
-// --- 9. EVENT CONFIRMATION LOGIC ---
 // --- 9. EVENT CONFIRMATION LOGIC ---
 const confirmForm = document.getElementById('confirmForm');
 const confirmEventSelect = document.getElementById('confirmEventSelect');
@@ -600,6 +786,7 @@ if (confirmEventSelect) {
             document.getElementById('detailDate').textContent = selectedEvent.date;
             document.getElementById('detailTime').textContent = selectedEvent.time;
             document.getElementById('detailVenue').textContent = selectedEvent.venue;
+            document.getElementById('detailDescription').textContent = selectedEvent.description;
             
             // Unhide the details box
             confirmEventDetails.classList.remove('hidden');

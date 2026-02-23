@@ -1,7 +1,7 @@
 [
   {
     "name": "Basketball Finals",
-    "date": "2023-11-16",
+    "date": "2026-03-06",
     "time": "Afternoon",
     "venue": "Sports Complex",
     "status": "Confirmed",
@@ -9,10 +9,10 @@
   },
   {
     "name": "Literature Fest",
-    "date": "2023-11-20",
+    "date": "2026-03-09",
     "time": "Morning",
     "venue": "Conference Hall A",
-    "status": "Confirmed",
+    "status": "Planning",
     "description": "Poetry slams, book discussions, and author sessions celebrating literature and creative writing."
   },
   {
@@ -52,6 +52,15 @@
     "date": "2026-02-23",
     "time": "Morning",
     "venue": "Conference Hall A",
-    "status": "Confirmed"
+    "status": "Confirmed",
+    "description": "Gaming Session in Valorant"
+  },
+  {
+    "name": "Research Poster Showcase",
+    "date": "2026-03-12",
+    "time": "Afternoon",
+    "venue": "Conference Hall A",
+    "description": "Academic exhibition where students present research posters, receive faculty feedback, and discuss ideas across departments.",
+    "status": "Planning"
   }
 ]

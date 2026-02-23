@@ -19,6 +19,21 @@ app.use(session({
 // Paths to your JSON "databases"
 const EVENTS_FILE = path.join(__dirname, 'data', 'events.json');
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+const REGISTRATIONS_FILE = path.join(__dirname, 'data', 'registrations.json');
+
+function readJsonFile(filePath, fallback = []) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(raw || '[]');
+  } catch (err) {
+    return fallback;
+  }
+}
+
+function writeJsonFile(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+}
 
 // --- 1. SERVE FILES ---
 app.use(express.static(path.join(__dirname, 'public')));
@@ -82,6 +97,69 @@ app.post('/api/events', (req, res) => {
     if (err) return res.status(500).send('Error saving data');
     return res.send('Data saved successfully');
   });
+});
+
+app.get('/api/registrations', (req, res) => {
+  const registrations = readJsonFile(REGISTRATIONS_FILE, []);
+  return res.json(registrations);
+});
+
+app.post('/api/registrations', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ ok: false, error: 'Not logged in' });
+  }
+
+  const {
+    eventId,
+    eventName,
+    date,
+    time,
+    venue,
+    userName,
+    userEmail,
+    studentId,
+    department
+  } = req.body || {};
+
+  if (!eventId || !eventName || !date || !time || !venue || !userEmail) {
+    return res.status(400).json({ ok: false, error: 'Missing registration fields' });
+  }
+
+  const registrations = readJsonFile(REGISTRATIONS_FILE, []);
+  const normalizedEmail = String(userEmail).toLowerCase();
+
+  const duplicate = registrations.find((item) => item.userEmail === normalizedEmail && item.eventId === eventId);
+  if (duplicate) {
+    return res.status(409).json({ ok: false, type: 'duplicate', error: 'Already registered for this event' });
+  }
+
+  const clash = registrations.find(
+    (item) => item.userEmail === normalizedEmail && item.date === date && item.time === time
+  );
+  if (clash) {
+    return res.status(409).json({
+      ok: false,
+      type: 'clash',
+      error: `Clash detected with ${clash.eventName}`
+    });
+  }
+
+  const newRegistration = {
+    eventId,
+    eventName,
+    date,
+    time,
+    venue,
+    userName: userName || req.session.user.username,
+    userEmail: normalizedEmail,
+    studentId: studentId || '',
+    department: department || '',
+    registeredAt: new Date().toISOString()
+  };
+
+  registrations.push(newRegistration);
+  writeJsonFile(REGISTRATIONS_FILE, registrations);
+  return res.json({ ok: true, registration: newRegistration });
 });
 
 app.listen(PORT, () => {

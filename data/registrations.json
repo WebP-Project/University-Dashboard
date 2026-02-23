@@ -1,0 +1,14 @@
+[
+  {
+    "eventId": "Literature Fest|2026-03-09|Morning|Conference Hall A",
+    "eventName": "Literature Fest",
+    "date": "2026-03-09",
+    "time": "Morning",
+    "venue": "Conference Hall A",
+    "userName": "student_lead",
+    "userEmail": "student@college.edu",
+    "studentId": "123",
+    "department": "CSC CORE",
+    "registeredAt": "2026-02-23T15:45:39.763Z"
+  }
+]

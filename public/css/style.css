@@ -41,6 +41,33 @@
     align-items: center;
     height: 100vh;
     margin: 0;
+    overflow: hidden;
+    position: relative;
+    color: #0f172a;
+}
+
+.login-bg-video-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.login-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.login-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(2, 6, 23, 0.56) 0%,
+        rgba(15, 118, 110, 0.24) 50%,
+        rgba(2, 6, 23, 0.64) 100%
+    );
 }
 
 .client-body {
@@ -55,13 +82,43 @@
 }
 
 .login-container {
-    background: var(--bg-card);
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(12px);
     padding: 2rem;
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
     width: 100%;
     max-width: 400px;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    position: relative;
+    z-index: 2;
+}
+
+.login-body .login-form h2 {
+    color: #f8fafc;
+}
+
+.login-body .login-form p {
+    color: #cbd5e1;
+}
+
+.login-body .input-group label {
+    color: #e2e8f0;
+}
+
+.login-body .input-group input,
+.login-body .input-group select {
+    color: #f8fafc;
+    background: rgba(15, 23, 42, 0.48);
+    border: 1px solid rgba(148, 163, 184, 0.42);
+}
+
+.login-body .login-btn {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+
+.login-body .error-msg {
+    color: #fecaca;
 }
 
 .login-form h2 {
@@ -137,6 +194,10 @@
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
 }
 
+header {
+    position: relative;
+}
+
 .theme-toggle-btn {
     border: 1px solid var(--border-color);
     background: var(--bg-card);
@@ -165,6 +226,25 @@
     display: flex;
     align-items: center;
     gap: 0.8rem;
+}
+
+.profile-panel {
+    position: absolute;
+    right: 1rem;
+    top: 4.5rem;
+    width: 260px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 12px 14px;
+    z-index: 30;
+}
+
+.profile-panel p {
+    margin: 6px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 #welcomeUser {
@@ -210,6 +290,15 @@
     padding: 0.55rem 1rem;
     border-radius: 999px;
     cursor: pointer;
+    font-weight: 600;
+}
+
+.filter-bar select {
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+    border-radius: 999px;
+    padding: 0.55rem 1rem;
     font-weight: 600;
 }
 
@@ -346,5 +435,11 @@
 
     .register-grid {
         grid-template-columns: 1fr;
+    }
+
+    .profile-panel {
+        width: calc(100% - 2rem);
+        right: 1rem;
+        top: 5.6rem;
     }
 }
