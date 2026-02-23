@@ -1,13 +1,5 @@
 [
   {
-    "name": "Tech Symposium",
-    "date": "2023-11-15",
-    "time": "Morning",
-    "venue": "Grand Auditorium",
-    "status": "Confirmed",
-    "description": "A campus-wide technology showcase with student innovations, talks, and prototype demos."
-  },
-  {
     "name": "Basketball Finals",
     "date": "2023-11-16",
     "time": "Afternoon",

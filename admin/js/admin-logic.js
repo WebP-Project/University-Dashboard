@@ -145,6 +145,23 @@ function renderEventsTable() {
         `;
         tbody.innerHTML += row;
     });
+    const totalEventsEl = document.getElementById('totalEvents');
+    if (totalEventsEl) totalEventsEl.textContent = events.length;
+
+// 2. Add the new calculations for Confirmed and Planning events:
+    const confirmedEventsEl = document.getElementById('confirmedEventsCount');
+    const planningEventsEl = document.getElementById('planningEventsCount');
+
+    if (confirmedEventsEl && planningEventsEl) {
+    // Count how many events have the status "Confirmed"
+        const confirmedCount = events.filter(ev => ev.status === "Confirmed").length;
+    // Count how many events have the status "Planning"
+        const planningCount = events.filter(ev => ev.status === "Planning").length;
+
+    // Update the numbers on the screen
+    confirmedEventsEl.textContent = confirmedCount;
+    planningEventsEl.textContent = planningCount;
+    }
 }
 
 function showSection(sectionId, navItem) {
