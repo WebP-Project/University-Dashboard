@@ -721,7 +721,7 @@ function renderPlanning() {
                 <p class="metric-line">Scheduled: ${ev.date} (${ev.time})</p>
                 <p class="metric-line">Venue: ${ev.venue}</p>
                 <p class="metric-line">Projected attendance: ${projectedAttendance}</p>
-                <p class="metric-line">Estimated budget: $${estimatedBudget.toLocaleString()}</p>
+                <p class="metric-line">Estimated budget: ₹${estimatedBudget.toLocaleString()}</p>
                 <div class="metric-line"><span>Planning Confidence</span><strong class="metric-strong">${confidence}%</strong></div>
                 <div class="progress"><span style="width:${confidence}%"></span></div>
             </div>
