@@ -339,9 +339,9 @@ function renderBudget() {
                 return `
                     <div class="card metric-card">
                         <h4>${c}</h4>
-                        <div class="metric-line"><span>Allocated</span><strong>$${allocated[c].toLocaleString()}</strong></div>
-                        <div class="metric-line"><span>Spent</span><strong>$${spent[c].toLocaleString()}</strong></div>
-                        <div class="metric-line"><span>Variance</span><strong>${variance >= 0 ? "+" : "-"}$${Math.abs(variance).toLocaleString()}</strong></div>
+                        <div class="metric-line"><span>Allocated</span><strong>₹${allocated[c].toLocaleString()}</strong></div>
+                        <div class="metric-line"><span>Spent</span><strong>₹${spent[c].toLocaleString()}</strong></div>
+                        <div class="metric-line"><span>Variance</span><strong>${variance >= 0 ? "+" : "-"}₹${Math.abs(variance).toLocaleString()}</strong></div>
                         <div class="progress"><span style="width:${pct}%"></span></div>
                     </div>
                 `;
@@ -404,12 +404,12 @@ function renderBudget() {
                 labels: categories,
                 datasets: [
                     {
-                        label: "Allocated ($)",
+                        label: "Allocated (₹)",
                         data: allocatedValues,
                         backgroundColor: "#94a3b8"
                     },
                     {
-                        label: "Spent ($)",
+                        label: "Spent (₹)",
                         data: spentValues,
                         backgroundColor: "#0f766e"
                     }
@@ -427,7 +427,7 @@ function renderBudget() {
                     legend: { position: "bottom" },
                     tooltip: {
                         callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}`
+                            label: (ctx) => `${ctx.dataset.label}: ₹${ctx.raw.toLocaleString()}`
                         }
                     }
                 }
