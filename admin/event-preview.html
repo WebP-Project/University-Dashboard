@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Preview</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <main class="preview-shell">
+        <a class="preview-back" href="dashboard.html">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <section id="eventPreviewCard" class="preview-card">
+            <div class="preview-poster-panel">
+                <img id="previewPoster" class="preview-poster" alt="Event poster">
+                <div id="previewPosterFallback" class="preview-poster-fallback hidden">NO POSTER</div>
+            </div>
+
+            <div class="preview-details-panel">
+                <span id="previewStatus" class="status-badge status-watch">Planning</span>
+                <h1 id="previewName">Event Name</h1>
+                <p id="previewDescription" class="preview-description">Event description goes here.</p>
+
+                <div class="preview-meta-grid">
+                    <div class="preview-meta-card">
+                        <h3>Date</h3>
+                        <p id="previewDate">-</p>
+                    </div>
+                    <div class="preview-meta-card">
+                        <h3>Time Slot</h3>
+                        <p id="previewTime">-</p>
+                    </div>
+                    <div class="preview-meta-card">
+                        <h3>Venue</h3>
+                        <p id="previewVenue">-</p>
+                    </div>
+                    <div class="preview-meta-card">
+                        <h3>Status</h3>
+                        <p id="previewStatusText">-</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/event-preview.js"></script>
+</body>
+</html>

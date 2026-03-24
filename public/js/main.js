@@ -163,6 +163,15 @@ function getEventId(event) {
     return `${event.name}|${event.date}|${event.time || 'TBA'}|${event.venue}`;
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function renderFilteredEvents() {
     if (!eventGrid) return;
 
@@ -198,15 +207,16 @@ function renderFilteredEvents() {
         const card = document.createElement('div');
         card.className = 'event-card';
         card.innerHTML = `
+            ${event.posterImage ? `<img class="event-poster" src="${event.posterImage}" alt="${escapeHtml(event.name)} poster">` : ''}
             <div class="event-content">
                 <span class="event-status status-${eventState}">${eventState.toUpperCase()}</span>
-                <h3>${event.name}</h3>
+                <h3>${escapeHtml(event.name)}</h3>
                 <div class="event-details">
-                    <p><strong>Date:</strong> ${event.date}</p>
-                    <p><strong>Time:</strong> ${event.time || 'TBA'}</p>
-                    <p><strong>Venue:</strong> ${event.venue}</p>
+                    <p><strong>Date:</strong> ${escapeHtml(event.date)}</p>
+                    <p><strong>Time:</strong> ${escapeHtml(event.time || 'TBA')}</p>
+                    <p><strong>Venue:</strong> ${escapeHtml(event.venue)}</p>
                 </div>
-                <p class="event-desc">${event.description || 'No description provided.'}</p>
+                <p class="event-desc">${escapeHtml(event.description || 'No description provided.')}</p>
                 <button class="register-btn ${canRegister ? '' : 'register-btn-disabled'}" ${canRegister ? '' : 'disabled'}>
                     ${canRegister ? 'Register Now' : 'Registration Closed'}
                 </button>
@@ -283,12 +293,13 @@ function renderRegistrationEventDetails() {
 
     const eventState = getEventState(selectedRegistrationEvent.date);
     registrationEventBox.innerHTML = `
+        ${selectedRegistrationEvent.posterImage ? `<img class="event-poster" src="${selectedRegistrationEvent.posterImage}" alt="${escapeHtml(selectedRegistrationEvent.name)} poster">` : ''}
         <span class="event-status status-${eventState}">${eventState.toUpperCase()}</span>
-        <h3>${selectedRegistrationEvent.name}</h3>
-        <p><strong>Date:</strong> ${selectedRegistrationEvent.date}</p>
-        <p><strong>Time:</strong> ${selectedRegistrationEvent.time || 'TBA'}</p>
-        <p><strong>Venue:</strong> ${selectedRegistrationEvent.venue}</p>
-        <p>${selectedRegistrationEvent.description || 'No description provided.'}</p>
+        <h3>${escapeHtml(selectedRegistrationEvent.name)}</h3>
+        <p><strong>Date:</strong> ${escapeHtml(selectedRegistrationEvent.date)}</p>
+        <p><strong>Time:</strong> ${escapeHtml(selectedRegistrationEvent.time || 'TBA')}</p>
+        <p><strong>Venue:</strong> ${escapeHtml(selectedRegistrationEvent.venue)}</p>
+        <p>${escapeHtml(selectedRegistrationEvent.description || 'No description provided.')}</p>
     `;
 }
 
