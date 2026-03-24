@@ -3,6 +3,10 @@ const eventGrid = document.getElementById('eventGrid');
 const logoutLink = document.querySelector('.logout-link');
 const eventsHeading = document.getElementById('eventsHeading');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
+const eventCalendar = document.getElementById('eventCalendar');
+const calendarMonthLabel = document.getElementById('calendarMonthLabel');
+const calendarPrevBtn = document.getElementById('calendarPrevBtn');
+const calendarNextBtn = document.getElementById('calendarNextBtn');
 const registrationPage = document.getElementById('registrationPage');
 const registrationForm = document.getElementById('registrationForm');
 const registrationEventBox = document.getElementById('registrationEventBox');
@@ -14,7 +18,9 @@ const profilePanel = document.getElementById('profilePanel');
 let allClientEvents = [];
 let currentEventFilter = 'all';
 let currentUser = null;
+let currentUserRegistrations = [];
 let selectedRegistrationEvent = null;
+let currentCalendarDate = new Date();
 
 window.addEventListener('DOMContentLoaded', async () => {
     initClientTheme();
@@ -35,6 +41,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (eventGrid) {
         bindEventFilters();
+        bindCalendarNavigation();
         currentUser = await loadCurrentUser();
         if (!currentUser) return;
         await fetchEvents();
@@ -117,12 +124,21 @@ async function loadCurrentUser() {
 
 async function fetchEvents() {
     try {
-        const response = await fetch('/api/events');
-        allClientEvents = await response.json();
+        const [eventsResponse, registrationsResponse] = await Promise.all([
+            fetch('/api/events'),
+            fetch('/api/registrations')
+        ]);
+
+        allClientEvents = await eventsResponse.json();
+        const registrations = registrationsResponse.ok ? await registrationsResponse.json() : [];
+        currentUserRegistrations = getCurrentUserRegistrations(registrations);
+
+        renderRegistrationCalendar();
         renderFilteredEvents();
     } catch (err) {
         console.error('Error loading events:', err);
         if (eventGrid) eventGrid.innerHTML = '<p class="error-msg">Unable to load events at this time.</p>';
+        if (eventCalendar) eventCalendar.innerHTML = '<p class="error-msg">Unable to load calendar at this time.</p>';
     }
 }
 
@@ -163,12 +179,185 @@ function getEventId(event) {
     return `${event.name}|${event.date}|${event.time || 'TBA'}|${event.venue}`;
 }
 
+function bindCalendarNavigation() {
+    if (calendarPrevBtn) {
+        calendarPrevBtn.addEventListener('click', () => {
+            currentCalendarDate = new Date(
+                currentCalendarDate.getFullYear(),
+                currentCalendarDate.getMonth() - 1,
+                1
+            );
+            renderRegistrationCalendar();
+        });
+    }
+
+    if (calendarNextBtn) {
+        calendarNextBtn.addEventListener('click', () => {
+            currentCalendarDate = new Date(
+                currentCalendarDate.getFullYear(),
+                currentCalendarDate.getMonth() + 1,
+                1
+            );
+            renderRegistrationCalendar();
+        });
+    }
+}
+
+function getCurrentUserRegistrations(registrations) {
+    if (!Array.isArray(registrations) || !currentUser?.email) return [];
+
+    const userEmail = currentUser.email.toLowerCase();
+    return registrations.filter((item) => (item.userEmail || '').toLowerCase() === userEmail);
+}
+
+function renderRegistrationCalendar() {
+    if (!eventCalendar) return;
+
+    const today = new Date();
+    const currentYear = currentCalendarDate.getFullYear();
+    const currentMonth = currentCalendarDate.getMonth();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const startWeekday = firstDayOfMonth.getDay();
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const todayKey = formatDateKey(today);
+    const registeredByDate = groupRegistrationsByDate(currentUserRegistrations, currentYear, currentMonth);
+
+    if (calendarMonthLabel) {
+        calendarMonthLabel.textContent = firstDayOfMonth.toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric'
+        });
+    }
+
+    const cells = [];
+
+    weekDays.forEach((day) => {
+        cells.push(`<div class="calendar-weekday">${day}</div>`);
+    });
+
+    for (let i = 0; i < startWeekday; i += 1) {
+        cells.push('<div class="calendar-day calendar-day-empty" aria-hidden="true"></div>');
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+        const dateKey = formatDateKey(new Date(currentYear, currentMonth, day));
+        const dayRegistrations = registeredByDate[dateKey] || [];
+        const eventBadges = dayRegistrations
+            .map((registration) => {
+                const eventTime = registration.time && registration.time !== 'TBA'
+                    ? `<span class="calendar-event-time">${registration.time}</span>`
+                    : '';
+                return `
+                    <div class="calendar-event-chip" title="${registration.eventName} - ${registration.venue}">
+                        <span class="calendar-event-name">${registration.eventName}</span>
+                        ${eventTime}
+                    </div>
+                `;
+            })
+            .join('');
+
+        cells.push(`
+            <div class="calendar-day ${dateKey === todayKey ? 'calendar-day-today' : ''}">
+                <div class="calendar-day-number">${day}</div>
+                <div class="calendar-day-events">
+                    ${eventBadges}
+                </div>
+            </div>
+        `);
+    }
+
+    eventCalendar.innerHTML = cells.join('');
+}
+
+function groupRegistrationsByDate(registrations, year, month) {
+    return registrations.reduce((grouped, registration) => {
+        const date = parseLocalDate(registration.date);
+        if (Number.isNaN(date.getTime())) return grouped;
+        if (date.getFullYear() !== year || date.getMonth() !== month) return grouped;
+
+        const key = formatDateKey(date);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(registration);
+        return grouped;
+    }, {});
+}
+
+function formatDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getEventDisplayMeta(event, registeredEventIds) {
+    const eventState = getEventState(event.date);
+    const isRegistered = registeredEventIds.has(getEventId(event));
+
+    if (eventState === 'completed') {
+        if (isRegistered) {
+            return {
+                eventState,
+                canRegister: false,
+                statusClass: 'status-completed',
+                statusLabel: 'COMPLETED',
+                actionLabel: 'Completed'
+            };
+        }
+
+        return {
+            eventState,
+            canRegister: false,
+            statusClass: 'status-ended',
+            statusLabel: 'ENDED',
+            actionLabel: 'Event Ended'
+        };
+    }
+
+    if (eventState === 'ongoing') {
+        return {
+            eventState,
+            canRegister: false,
+            statusClass: 'status-ongoing',
+            statusLabel: 'ONGOING',
+            actionLabel: 'In Progress'
+        };
+    }
+
+    return {
+        eventState,
+        canRegister: true,
+        statusClass: 'status-upcoming',
+        statusLabel: 'UPCOMING',
+        actionLabel: 'Register Now'
+    };
+}
+
 function renderFilteredEvents() {
     if (!eventGrid) return;
 
+    if (eventCalendar) {
+        const calendarPanel = eventCalendar.closest('.calendar-panel');
+        if (calendarPanel) {
+            calendarPanel.classList.toggle('hidden', currentEventFilter !== 'completed');
+        }
+    }
+
+    const registeredEventIds = new Set(
+        currentUserRegistrations.map((registration) => registration.eventId)
+    );
+
     const filteredEvents = allClientEvents.filter((event) => {
         if (currentEventFilter === 'all') return true;
-        return getEventState(event.date) === currentEventFilter;
+
+        const eventState = getEventState(event.date);
+        if (eventState !== currentEventFilter) return false;
+
+        if (currentEventFilter === 'completed') {
+            return registeredEventIds.has(getEventId(event));
+        }
+
+        return true;
     });
 
     eventGrid.innerHTML = '';
@@ -185,21 +374,24 @@ function renderFilteredEvents() {
     }
 
     if (!filteredEvents.length) {
-        const emptyLabel = currentEventFilter === 'all' ? 'events' : `${currentEventFilter} events`;
+        const emptyLabel = currentEventFilter === 'completed'
+            ? 'registered completed events'
+            : currentEventFilter === 'all'
+                ? 'events'
+                : `${currentEventFilter} events`;
         eventGrid.innerHTML = `<p>No ${emptyLabel} found.</p>`;
         return;
     }
 
     filteredEvents.forEach((event) => {
-        const eventState = getEventState(event.date);
-        const canRegister = eventState === 'upcoming';
+        const eventDisplay = getEventDisplayMeta(event, registeredEventIds);
         const eventId = getEventId(event);
 
         const card = document.createElement('div');
         card.className = 'event-card';
         card.innerHTML = `
             <div class="event-content">
-                <span class="event-status status-${eventState}">${eventState.toUpperCase()}</span>
+                <span class="event-status ${eventDisplay.statusClass}">${eventDisplay.statusLabel}</span>
                 <h3>${event.name}</h3>
                 <div class="event-details">
                     <p><strong>Date:</strong> ${event.date}</p>
@@ -207,14 +399,14 @@ function renderFilteredEvents() {
                     <p><strong>Venue:</strong> ${event.venue}</p>
                 </div>
                 <p class="event-desc">${event.description || 'No description provided.'}</p>
-                <button class="register-btn ${canRegister ? '' : 'register-btn-disabled'}" ${canRegister ? '' : 'disabled'}>
-                    ${canRegister ? 'Register Now' : 'Registration Closed'}
+                <button class="register-btn ${eventDisplay.canRegister ? '' : 'register-btn-disabled'}" ${eventDisplay.canRegister ? '' : 'disabled'}>
+                    ${eventDisplay.actionLabel}
                 </button>
             </div>
         `;
 
         const registerBtn = card.querySelector('.register-btn');
-        if (canRegister && registerBtn) {
+        if (eventDisplay.canRegister && registerBtn) {
             registerBtn.addEventListener('click', () => registerForEventById(eventId));
         }
 
@@ -397,6 +589,9 @@ async function submitRegistration(registration) {
                 <p><strong>Venue:</strong> ${registration.venue}</p>
             `;
         }
+
+        currentUserRegistrations = [...currentUserRegistrations, registration];
+        renderRegistrationCalendar();
     } catch (err) {
         console.error('Registration submit failed', err);
         setRegistrationMessage('Registration failed. Please try again.', 'error');

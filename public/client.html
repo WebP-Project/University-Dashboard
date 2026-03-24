@@ -42,6 +42,27 @@
             <button class="filter-btn" data-filter="completed">Completed</button>
         </div>
 
+        <section class="calendar-panel" aria-labelledby="calendarHeading">
+            <div class="calendar-panel-header">
+                <div>
+                    <h3 id="calendarHeading">My Event Calendar</h3>
+                    <p>Your current month with registered events.</p>
+                </div>
+                <div class="calendar-nav">
+                    <button id="calendarPrevBtn" class="calendar-nav-btn" type="button" aria-label="Previous month">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="calendarMonthLabel" class="calendar-month-label"></span>
+                    <button id="calendarNextBtn" class="calendar-nav-btn" type="button" aria-label="Next month">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="eventCalendar" class="event-calendar">
+                <p>Loading calendar...</p>
+            </div>
+        </section>
+
         <div id="eventGrid" class="event-grid">
             <p>Loading events...</p>
         </div>

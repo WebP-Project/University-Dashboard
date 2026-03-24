@@ -62,5 +62,21 @@
     "venue": "Conference Hall A",
     "description": "Academic exhibition where students present research posters, receive faculty feedback, and discuss ideas across departments.",
     "status": "Planning"
+  },
+  {
+    "name": "Hackathon 3",
+    "date": "2026-02-27",
+    "time": "Afternoon",
+    "venue": "Conference Hall A",
+    "description": "Web Project",
+    "status": "Confirmed"
+  },
+  {
+    "name": "a",
+    "date": "2026-02-25",
+    "time": "Morning",
+    "venue": "Sports Complex",
+    "description": "aaa",
+    "status": "Planning"
   }
 ]
