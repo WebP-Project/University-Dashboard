@@ -23,7 +23,7 @@
                 <li onclick="showSection('scheduling', this)" class="active-nav"><i class="fas fa-calendar-check"></i> Event Planning</li>
                 <li onclick="showSection('confirmation', this)"><i class="fas fa-check-circle"></i> Event Confirmation</li>
                 <li onclick="showSection('budget', this)"><i class="fas fa-wallet"></i> Budget Allocation</li>
-                <li onclick="showSection('venues', this)"><i class="fas fa-building"></i> Venue Utilization</li>
+                <li onclick="showSection('venues', this)"><i class="fas fa-map-marked-alt"></i> Venue Optimization</li>
                 <li onclick="showSection('participation', this)"><i class="fas fa-users"></i> Participation Analysis</li>
                 <li onclick="showSection('performance', this)"><i class="fas fa-chart-line"></i> Performance Evaluation</li>
                 <li onclick="showSection('planning', this)"><i class="fas fa-lightbulb"></i> Future Event Planning</li>
@@ -71,6 +71,8 @@
                     </div>
                 </div>
 
+                <div id="planningInsights" class="insight-grid"></div>
+
                 <div class="scheduling-layout">
                     <div class="card form-card">
                         <h3>Schedule New Event</h3>
@@ -101,7 +103,19 @@
                             </div>
                             <div class="form-group">
                                 <label for="eventDescription">Description</label>
-                                <input type="text" id="eventDescription" required="false">
+                                <textarea id="eventDescription" rows="4" placeholder="Short event summary, audience, highlights..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="eventPoster">Event Poster</label>
+                                <input type="file" id="eventPoster" accept="image/*">
+                                <small class="helper-text">Upload JPG, PNG, or WEBP. The selected poster will be saved in <code>events.json</code>.</small>
+                            </div>
+                            <div id="posterPreviewCard" class="poster-upload-preview hidden">
+                                <img id="posterPreviewImage" alt="Selected event poster preview">
+                                <div>
+                                    <h4>Poster Preview</h4>
+                                    <p id="posterPreviewName">No file selected</p>
+                                </div>
                             </div>
                             <button type="submit" class="btn-primary">Plan an Event</button>
                         </form>
@@ -116,9 +130,11 @@
 
                     <div class="card table-card">
                         <h3>Scheduled Events Database</h3>
+                        <div id="scheduleBoard" class="schedule-board"></div>
                         <table id="eventsTable" class="styled-table">
                             <thead>
                                 <tr>
+                                    <th>Poster</th>
                                     <th>Event Name</th>
                                     <th>Date / Time</th>
                                     <th>Venue</th>
@@ -148,16 +164,34 @@
                     </div>
 
                     <div id="confirmEventDetails" class="hidden confirm-details">
-                        <p><strong>Date:</strong> <span id="detailDate"></span></p>
-                        <p><strong>Time Slot:</strong> <span id="detailTime"></span></p>
-                        <p><strong>Venue:</strong> <span id="detailVenue"></span></p>
-                        <p><strong>Description:</strong> <span id="detailDescription"></span></p>
+                        <div class="confirm-details-grid">
+                            <div class="confirm-details-copy">
+                                <p><strong>Date:</strong> <span id="detailDate"></span></p>
+                                <p><strong>Time Slot:</strong> <span id="detailTime"></span></p>
+                                <p><strong>Venue:</strong> <span id="detailVenue"></span></p>
+                                <p><strong>Description:</strong> <span id="detailDescription"></span></p>
+                            </div>
+                            <div id="confirmPosterWrap" class="confirm-poster hidden">
+                                <img id="detailPoster" alt="Event poster preview">
+                            </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-primary confirm-btn">Confirm Event</button>
                 </form>
 
                 <div id="confirmMessage" class="alert hidden"></div>
+                </div>
+
+                <div class="confirmation-side">
+                    <div class="card">
+                        <h3>Pending Confirmation Queue</h3>
+                        <div id="confirmationQueue" class="queue-list"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Publishing Checklist</h3>
+                        <div id="publishingChecklist" class="checklist"></div>
+                    </div>
                 </div>
             </div>
             </section>
@@ -183,24 +217,26 @@
 
             <section id="venues" class="section hidden">
                 <header class="section-header">
-                    <h1>Venue Utilization</h1>
-                    <p>Daily venue utilization across the selected date range.</p>
+                    <h1>Venue Optimization</h1>
+                    <p>Spot under-utilized rooms, estimate crowd density, and improve venue fit before events are finalized.</p>
                 </header>
 
-                <div class="card">
-                    <div class="filter-row">
-                        <label for="venueRange">Range</label>
-                        <select id="venueRange" onchange="renderVenueUtilization()">
-                            <option value="week">Next 7 Days</option>
-                            <option value="month" selected>Next 30 Days</option>
-                            <option value="all">All Dates</option>
-                        </select>
-                        <button class="chip active-chip" onclick="filterVenue('all', this)">All</button>
-                        <button class="chip" onclick="filterVenue('available', this)">Available</button>
-                        <button class="chip" onclick="filterVenue('high', this)">High Load</button>
+                <div id="operationsOverview" class="insight-grid"></div>
+
+                <div class="operations-layout">
+                    <div class="card">
+                        <h3>Room Fit Recommendations</h3>
+                        <div id="launchPriorityBoard" class="ops-board"></div>
                     </div>
-                    <div id="venueOverview" class="insight-grid"></div>
-                    <div id="venueMatrix" class="venue-matrix"></div>
+                    <div class="card">
+                        <h3>Campus Crowd Density</h3>
+                        <div id="venuePressureList" class="ops-stack"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Venue Utilization Snapshot</h3>
+                    <div id="creativeTracker" class="creative-grid"></div>
                 </div>
             </section>
 

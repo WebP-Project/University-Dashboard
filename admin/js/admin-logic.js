@@ -5,7 +5,8 @@ const defaultEvents = [
         time: "Morning",
         venue: "Grand Auditorium",
         status: "Confirmed",
-        description: "A university-wide technology showcase with student innovations and expert sessions."
+        description: "A university-wide technology showcase with student innovations and expert sessions.",
+        posterImage: ""
     },
     {
         name: "Basketball Finals",
@@ -13,7 +14,8 @@ const defaultEvents = [
         time: "Afternoon",
         venue: "Sports Complex",
         status: "Confirmed",
-        description: "Championship game featuring top college teams and live audience engagement."
+        description: "Championship game featuring top college teams and live audience engagement.",
+        posterImage: ""
     },
     {
         name: "Literature Fest",
@@ -21,7 +23,8 @@ const defaultEvents = [
         time: "Evening",
         venue: "Conference Hall A",
         status: "Planning",
-        description: "Literary activities including poetry, talks, and student-led book discussions."
+        description: "Literary activities including poetry, talks, and student-led book discussions.",
+        posterImage: ""
     }
 ];
 
@@ -31,7 +34,7 @@ const timeSlots = ["Morning", "Afternoon", "Evening"];
 let events = [];
 let registrations = [];
 let clashCounter = 0;
-let venueFilter = "all";
+let selectedPosterImage = "";
 
 let budgetChartRef = null;
 let burnChartRef = null;
@@ -89,8 +92,100 @@ function getAnalyticsEvents() {
 function ensureEventDescriptions(eventList) {
     return eventList.map((ev) => ({
         ...ev,
-        description: (ev.description && ev.description.trim()) || `Details for ${ev.name}.`
+        description: (ev.description && ev.description.trim()) || `Details for ${ev.name}.`,
+        posterImage: typeof ev.posterImage === "string" ? ev.posterImage : ""
     }));
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function getPosterMarkup(event, altText = "Event poster") {
+    const previewUrl = `event-preview.html?event=${encodeURIComponent(getEventId(event))}`;
+    if (event.posterImage) {
+        return `
+            <a class="poster-link" href="${previewUrl}" target="_blank" rel="noopener noreferrer" title="Open full event preview">
+                <img src="${event.posterImage}" alt="${escapeHtml(altText)}" class="poster-thumb">
+            </a>
+        `;
+    }
+    return `
+        <a class="poster-link" href="${previewUrl}" target="_blank" rel="noopener noreferrer" title="Open full event preview">
+            <span class="poster-fallback" aria-label="No poster">NA</span>
+        </a>
+    `;
+}
+
+function setPosterPreview(imageSrc = "", fileName = "") {
+    const previewCard = document.getElementById("posterPreviewCard");
+    const previewImage = document.getElementById("posterPreviewImage");
+    const previewName = document.getElementById("posterPreviewName");
+    if (!previewCard || !previewImage || !previewName) return;
+
+    if (!imageSrc) {
+        previewCard.classList.add("hidden");
+        previewImage.removeAttribute("src");
+        previewName.textContent = "No file selected";
+        return;
+    }
+
+    previewImage.src = imageSrc;
+    previewName.textContent = fileName || "Poster selected";
+    previewCard.classList.remove("hidden");
+}
+
+function readPosterFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(new Error("Unable to read image file"));
+        reader.readAsDataURL(file);
+    });
+}
+
+function bindPosterUploader() {
+    const posterInput = document.getElementById("eventPoster");
+    if (!posterInput) return;
+
+    posterInput.addEventListener("change", async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            selectedPosterImage = "";
+            setPosterPreview();
+            return;
+        }
+
+        if (!file.type.startsWith("image/")) {
+            alert("Please upload a valid image file for the event poster.");
+            posterInput.value = "";
+            selectedPosterImage = "";
+            setPosterPreview();
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Please upload a poster image smaller than 2 MB.");
+            posterInput.value = "";
+            selectedPosterImage = "";
+            setPosterPreview();
+            return;
+        }
+
+        try {
+            selectedPosterImage = await readPosterFile(file);
+            setPosterPreview(selectedPosterImage, file.name);
+        } catch (error) {
+            console.error("Poster preview failed:", error);
+            selectedPosterImage = "";
+            setPosterPreview();
+        }
+    });
 }
 
 async function loadEventsFromServer() {
@@ -193,6 +288,7 @@ async function saveData() {
 function bindFormHandlers() {
     const eventForm = document.getElementById("eventForm");
     if (!eventForm) return;
+    bindPosterUploader();
 
     eventForm.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -203,6 +299,7 @@ function bindFormHandlers() {
         const venue = document.getElementById("eventVenue").value;
         const descriptionInput = document.getElementById("eventDescription");
         const description = descriptionInput?.value.trim() || `Details for ${name}.`;
+        const posterImage = selectedPosterImage;
         const clashAlert = document.getElementById("clashAlert");
         const successAlert = document.getElementById("successAlert");
 
@@ -214,7 +311,7 @@ function bindFormHandlers() {
             successAlert.classList.add("hidden");
             setTimeout(() => clashAlert.classList.add("hidden"), 2600);
         } else {
-            events.push({ name, date, time, venue, description, status: "Planning" });
+            events.push({ name, date, time, venue, description, posterImage, status: "Planning" });
             await saveData();
             renderEventsTable();
             renderAllInsights();
@@ -223,6 +320,8 @@ function bindFormHandlers() {
             clashAlert.classList.add("hidden");
             eventForm.reset();
             document.getElementById("eventDate").valueAsDate = new Date();
+            selectedPosterImage = "";
+            setPosterPreview();
             setTimeout(() => successAlert.classList.add("hidden"), 2600);
         }
 
@@ -248,9 +347,10 @@ function renderEventsTable() {
     events.forEach((event, index) => {
         const row = `
             <tr>
-                <td><strong class="event-name-text" title="${event.name}">${event.name}</strong></td>
-                <td>${event.date} (${event.time})</td>
-                <td>${event.venue}</td>
+                <td>${getPosterMarkup(event, `${event.name} poster`)}</td>
+                <td><strong class="event-name-text" title="${escapeHtml(event.name)}">${escapeHtml(event.name)}</strong></td>
+                <td>${escapeHtml(event.date)} (${escapeHtml(event.time)})</td>
+                <td>${escapeHtml(event.venue)}</td>
                 <td>
                     <span class="status-badge ${event.status === "Confirmed" ? "status-good" : "status-watch"}">${event.status}</span>
                     <button onclick="deleteEvent(${index})" style="margin-left:10px; color:#e74c3c; background:none; border:none; cursor:pointer; font-weight:bold;">
@@ -278,6 +378,8 @@ function renderEventsTable() {
     confirmedEventsEl.textContent = confirmedCount;
     planningEventsEl.textContent = planningCount;
     }
+
+    renderScheduleBoard();
 }
 
 function showSection(sectionId, navItem) {
@@ -300,6 +402,81 @@ function updateSchedulingKpis() {
     if (totalEl) totalEl.innerText = events.length;
     if (todayEl) todayEl.innerText = todayBookings;
     if (clashEl) clashEl.innerText = clashCounter;
+    renderPlanningInsights();
+}
+
+function renderPlanningInsights() {
+    const planningInsights = document.getElementById("planningInsights");
+    if (!planningInsights) return;
+
+    const upcoming = [...events]
+        .filter((ev) => parseEventDate(ev.date))
+        .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date));
+    const planned = upcoming.filter((ev) => ev.status === "Planning");
+    const postersReady = events.filter((ev) => ev.posterImage).length;
+    const readyToPublish = upcoming.filter((ev) => ev.status === "Confirmed" && ev.posterImage).length;
+
+    planningInsights.innerHTML = `
+        <div class="card metric-card">
+            <h4>Ready To Publish</h4>
+            <div class="metric-strong">${readyToPublish}</div>
+            <p>${readyToPublish ? "Confirmed events with posters are ready for posters, notices, and student promotion." : "No events are fully ready for publishing yet."}</p>
+        </div>
+        <div class="card metric-card">
+            <h4>Poster Coverage</h4>
+            <div class="metric-strong">${postersReady}/${events.length || 0}</div>
+            <p>${events.length ? `${Math.round((postersReady / events.length) * 100)}% of events already have creative assets.` : "Upload posters while scheduling to build your media-ready catalog."}</p>
+        </div>
+        <div class="card metric-card">
+            <h4>Planning Backlog</h4>
+            <div class="metric-strong">${planned.length}</div>
+            <p>${planned.length ? "These events are still waiting for confirmation and publishing." : "No pending events. The queue is fully cleared."}</p>
+        </div>
+        <div class="card metric-card">
+            <h4>Most Used Venue</h4>
+            <div class="metric-strong">${getMostUsedVenue()}</div>
+            <p>Useful for spotting overbooked spaces and shifting upcoming plans.</p>
+        </div>
+    `;
+}
+
+function getMostUsedVenue() {
+    if (!events.length) return "N/A";
+    const counts = {};
+    events.forEach((ev) => {
+        counts[ev.venue] = (counts[ev.venue] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+}
+
+function renderScheduleBoard() {
+    const scheduleBoard = document.getElementById("scheduleBoard");
+    if (!scheduleBoard) return;
+
+    const upcoming = [...events]
+        .filter((ev) => parseEventDate(ev.date))
+        .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date))
+        .slice(0, 3);
+
+    if (!upcoming.length) {
+        scheduleBoard.innerHTML = `
+            <div class="schedule-mini-card">
+                <h4>No scheduled events yet</h4>
+                <p>Once events are added, this space can highlight upcoming posters, venue readiness, and publish status.</p>
+            </div>
+        `;
+        return;
+    }
+
+    scheduleBoard.innerHTML = upcoming
+        .map((event) => `
+            <div class="schedule-mini-card">
+                <h4>${escapeHtml(event.name)}</h4>
+                <p>${escapeHtml(event.date)} · ${escapeHtml(event.time)} · ${escapeHtml(event.venue)}</p>
+                <p>${event.posterImage ? "Poster uploaded and ready for promotion." : "Poster still missing. Add one before publishing."}</p>
+            </div>
+        `)
+        .join("");
 }
 
 function renderBudget() {
@@ -436,168 +613,178 @@ function renderBudget() {
     }
 }
 
-function filterVenue(mode, button) {
-    venueFilter = mode;
-    document.querySelectorAll("#venues .chip").forEach((chip) => chip.classList.remove("active-chip"));
-    if (button) button.classList.add("active-chip");
-    renderVenueUtilization();
-}
-
-function getVenueDateBounds(rangeKey) {
-    const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-    if (rangeKey === "week") {
-        const end = new Date(start);
-        end.setDate(end.getDate() + 6);
-        return { start, end };
-    }
-
-    if (rangeKey === "month") {
-        const end = new Date(start);
-        end.setDate(end.getDate() + 29);
-        return { start, end };
-    }
-
-    const parsedDates = events
-        .map((ev) => new Date(ev.date))
-        .filter((d) => !Number.isNaN(d.getTime()));
-
-    if (!parsedDates.length) {
-        return { start, end: new Date(start) };
-    }
-
-    const minDate = new Date(Math.min(...parsedDates));
-    const maxDate = new Date(Math.max(...parsedDates));
-    return { start: minDate, end: maxDate };
-}
-
-function isDateInRange(dateText, start, end) {
-    const d = new Date(dateText);
-    if (Number.isNaN(d.getTime())) return false;
-    d.setHours(0, 0, 0, 0);
-    return d >= start && d <= end;
-}
-
-function formatISODate(dateObj) {
-    return dateObj.toISOString().slice(0, 10);
-}
-
 function parseEventDate(dateText) {
     const [year, month, day] = (dateText || "").split("-").map(Number);
     if (!year || !month || !day) return null;
     return new Date(year, month - 1, day);
 }
 
-function renderVenueUtilization() {
-    const matrix = document.getElementById("venueMatrix");
-    const overview = document.getElementById("venueOverview");
-    if (!matrix) return;
+function renderEventOperations() {
+    const overview = document.getElementById("operationsOverview");
+    const priorityBoard = document.getElementById("launchPriorityBoard");
+    const pressureList = document.getElementById("venuePressureList");
+    const creativeTracker = document.getElementById("creativeTracker");
+    if (!overview || !priorityBoard || !pressureList || !creativeTracker) return;
 
-    const rangeKey = document.getElementById("venueRange")?.value || "month";
-    const { start, end } = getVenueDateBounds(rangeKey);
+    const venueCapacities = {
+        "Grand Auditorium": 800,
+        "Sports Complex": 1200,
+        "Conference Hall A": 240
+    };
 
-    const rangeEvents = events.filter((ev) => isDateInRange(ev.date, start, end));
-    const daysInRange = Math.max(1, Math.floor((end - start) / (24 * 60 * 60 * 1000)) + 1);
+    const venueZones = {
+        "Grand Auditorium": "Central Academic Block",
+        "Sports Complex": "South Campus Sports Zone",
+        "Conference Hall A": "Conference Wing"
+    };
 
-    const rowData = venues.map((venue) => {
-        const venueEvents = rangeEvents.filter((ev) => ev.venue === venue);
+    const analytics = getAnalyticsEvents();
+    const analyticsMap = Object.fromEntries(analytics.map((event) => [getEventId(event), event]));
 
-        const slotGroupCount = {};
-        const dayLoads = {};
-
-        venueEvents.forEach((ev) => {
-            const slotKey = `${ev.date}|${ev.time}`;
-            slotGroupCount[slotKey] = (slotGroupCount[slotKey] || 0) + 1;
-            dayLoads[ev.date] = (dayLoads[ev.date] || 0) + 1;
+    const upcoming = [...events]
+        .filter((ev) => {
+            const parsed = parseEventDate(ev.date);
+            if (!parsed) return false;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return parsed >= today;
+        })
+        .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date))
+        .map((event) => {
+            const enriched = analyticsMap[getEventId(event)] || {};
+            const projectedAttendance = enriched.attendance || 0;
+            const capacity = venueCapacities[event.venue] || 300;
+            const utilization = capacity ? Math.min(100, Math.round((projectedAttendance / capacity) * 100)) : 0;
+            return {
+                ...event,
+                projectedAttendance,
+                capacity,
+                utilization,
+                zone: venueZones[event.venue] || "Main Campus"
+            };
         });
 
-        const clashCount = Object.values(slotGroupCount).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
-        const totalEvents = venueEvents.length;
-        const avgPerDay = Number((totalEvents / daysInRange).toFixed(2));
-        const utilization = Math.round((avgPerDay / timeSlots.length) * 100);
-        const activeDays = Object.keys(dayLoads).length;
+    const recentFallback = [...events]
+        .filter((ev) => parseEventDate(ev.date))
+        .sort((a, b) => parseEventDate(b.date) - parseEventDate(a.date))
+        .slice(0, 6)
+        .map((event) => {
+            const enriched = analyticsMap[getEventId(event)] || {};
+            const projectedAttendance = enriched.attendance || 0;
+            const capacity = venueCapacities[event.venue] || 300;
+            const utilization = capacity ? Math.min(100, Math.round((projectedAttendance / capacity) * 100)) : 0;
+            return {
+                ...event,
+                projectedAttendance,
+                capacity,
+                utilization,
+                zone: venueZones[event.venue] || "Main Campus"
+            };
+        });
 
-        const peakEntry = Object.entries(dayLoads).sort((a, b) => b[1] - a[1])[0];
-        const peakDay = peakEntry ? peakEntry[0] : "N/A";
-        const peakPerDay = peakEntry ? peakEntry[1] : 0;
+    const venueEvents = upcoming.length ? upcoming : recentFallback;
+    const dataWindowLabel = upcoming.length ? "upcoming" : "recent";
 
-        return {
-            venue,
-            utilization,
-            clashCount,
-            totalEvents,
-            avgPerDay,
-            activeDays,
-            peakDay,
-            peakPerDay
-        };
-    });
+    const underUtilized = venueEvents.filter((ev) => ev.utilization <= 35);
+    const optimalFit = venueEvents.filter((ev) => ev.utilization > 35 && ev.utilization <= 85);
+    const crowded = venueEvents.filter((ev) => ev.utilization > 85);
+    const mostCrowded = [...venueEvents].sort((a, b) => b.projectedAttendance - a.projectedAttendance).slice(0, 3);
 
-    const filtered = rowData.filter((row) => {
-        if (venueFilter === "available") return row.avgPerDay <= 0.6;
-        if (venueFilter === "high") return row.avgPerDay >= 1.5;
-        return true;
-    });
-
-    if (overview) {
-        const avgUtil = rowData.length
-            ? Math.round(rowData.reduce((sum, row) => sum + row.utilization, 0) / rowData.length)
-            : 0;
-        const totalClashes = rowData.reduce((sum, row) => sum + row.clashCount, 0);
-        const mostLoaded = [...rowData].sort((a, b) => b.avgPerDay - a.avgPerDay)[0];
-
-        overview.innerHTML = `
-            <div class="card metric-card">
-                <h4>Range Window</h4>
-                <div class="metric-strong">${formatISODate(start)} to ${formatISODate(end)}</div>
-                <p>${daysInRange} day(s) analyzed</p>
-            </div>
-            <div class="card metric-card">
-                <h4>Average Utilization / Day</h4>
-                <div class="metric-strong">${avgUtil}%</div>
-                <p>Based on average events per day per venue</p>
-            </div>
-            <div class="card metric-card">
-                <h4>Total Clash Risk</h4>
-                <div class="metric-strong">${totalClashes}</div>
-                <p>Only same venue + same date + same slot counted</p>
-            </div>
-            <div class="card metric-card">
-                <h4>Most Loaded Venue</h4>
-                <div class="metric-strong">${mostLoaded ? mostLoaded.venue : "N/A"}</div>
-                <p>${mostLoaded ? `${mostLoaded.avgPerDay} events/day` : "No data"}</p>
-            </div>
-        `;
-    }
-
-    const header = `
-        <div class="matrix-row">
-            <div class="matrix-cell cell-head">Venue</div>
-            <div class="matrix-cell cell-head">Avg Events / Day</div>
-            <div class="matrix-cell cell-head">Active Days</div>
-            <div class="matrix-cell cell-head">Peak Day / Clashes</div>
+    overview.innerHTML = `
+        <div class="card metric-card">
+            <h4>Under-Utilized Rooms</h4>
+            <div class="metric-strong">${underUtilized.length}</div>
+            <p>Based on ${dataWindowLabel} events that may fit better in smaller halls.</p>
+        </div>
+        <div class="card metric-card">
+            <h4>High Crowd Risk</h4>
+            <div class="metric-strong">${crowded.length}</div>
+            <p>${upcoming.length ? "Upcoming" : "Recent"} events likely to create crowding near their current venue.</p>
+        </div>
+        <div class="card metric-card">
+            <h4>Best-Fit Bookings</h4>
+            <div class="metric-strong">${optimalFit.length}</div>
+            <p>Events currently placed in venues with healthy utilization levels.</p>
+        </div>
+        <div class="card metric-card">
+            <h4>Projected Footfall</h4>
+            <div class="metric-strong">${venueEvents.reduce((sum, ev) => sum + ev.projectedAttendance, 0).toLocaleString()}</div>
+            <p>Total expected attendance across all ${dataWindowLabel} events on the admin board.</p>
         </div>
     `;
 
-    const rows = filtered
-        .map((row) => {
-            const utilClass = row.utilization >= 60 ? "occ-high" : row.utilization >= 30 ? "occ-mid" : "occ-low";
+    if (!venueEvents.length) {
+        priorityBoard.innerHTML = `
+            <div class="priority-card">
+                <div class="poster-fallback">OK</div>
+                <div class="priority-meta">
+                    <strong>No venue recommendations yet</strong>
+                    <p>Create events to generate room-fit suggestions here.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        priorityBoard.innerHTML = venueEvents.slice(0, 5).map((event) => {
+            const recommendation = event.utilization <= 20
+                ? "Move to a smaller hall"
+                : event.utilization <= 35
+                    ? "Consider downsizing venue"
+                    : event.utilization > 85
+                        ? "Prepare overflow control"
+                        : "Venue fit looks healthy";
+
             return `
-                <div class="matrix-row">
-                    <div class="matrix-cell cell-head">${row.venue}</div>
-                    <div class="matrix-cell ${utilClass}">${row.avgPerDay} (${row.utilization}%)</div>
-                    <div class="matrix-cell">${row.activeDays} / ${daysInRange} days</div>
-                    <div class="matrix-cell">
-                        Peak: <strong>${row.peakDay}</strong> (${row.peakPerDay} events)<br>
-                        Clashes: <strong>${row.clashCount}</strong>
+                <div class="priority-card">
+                    ${event.posterImage ? `<img class="priority-poster" src="${event.posterImage}" alt="${escapeHtml(event.name)} poster">` : `<div class="poster-fallback">NO</div>`}
+                    <div class="priority-meta">
+                        <span class="priority-tag">${recommendation}</span>
+                        <strong>${escapeHtml(event.name)}</strong>
+                        <p>${escapeHtml(event.date)} · ${escapeHtml(event.venue)} · ${event.utilization}% utilized</p>
                     </div>
                 </div>
             `;
-        })
-        .join("");
+        }).join("");
+    }
 
-    matrix.innerHTML = header + (rows || "<div class='matrix-cell'>No venues match this filter in selected date range.</div>");
+    pressureList.innerHTML = mostCrowded.length
+        ? mostCrowded.map((item) => `
+        <div class="pressure-item">
+            <div class="pressure-meta">
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <p>${escapeHtml(item.zone)} · ${item.projectedAttendance} expected attendees near ${escapeHtml(item.venue)}</p>
+                </div>
+                <span class="pressure-tag ${item.utilization > 85 ? "high" : item.utilization > 60 ? "mid" : "low"}">${item.utilization > 85 ? "Crowded" : item.utilization > 60 ? "Busy" : "Stable"}</span>
+            </div>
+    `).join("")
+        : `
+        <div class="pressure-item">
+            <div class="pressure-meta">
+                <strong>No crowd density data yet</strong>
+                <p>Schedule events and this panel will estimate the busiest campus zones.</p>
+            </div>
+            <span class="pressure-tag low">Stable</span>
+        </div>
+    `;
+
+    creativeTracker.innerHTML = venueEvents.length
+        ? venueEvents.map((event) => `
+            <div class="creative-card">
+                ${event.posterImage ? `<img class="creative-poster" src="${event.posterImage}" alt="${escapeHtml(event.name)} poster">` : `<div class="creative-poster poster-fallback">NO POSTER</div>`}
+                <div class="creative-meta">
+                    <strong>${escapeHtml(event.name)}</strong>
+                    <p>${escapeHtml(event.date)} · ${escapeHtml(event.venue)} · Capacity ${event.capacity}</p>
+                    <span class="creative-tag ${event.utilization > 85 ? "missing" : "ready"}">${event.utilization}% utilized</span>
+                </div>
+            </div>
+        `).join("")
+        : `
+            <div class="creative-card">
+                <div class="creative-meta">
+                    <strong>No venue data</strong>
+                    <p>Create or confirm events to populate the optimization view.</p>
+                </div>
+            </div>
+        `;
 }
 
 function renderParticipation() {
@@ -734,10 +921,12 @@ function renderPlanning() {
 function renderAllInsights() {
     updateSchedulingKpis();
     renderBudget();
-    renderVenueUtilization();
+    renderEventOperations();
     renderParticipation();
     renderPerformance();
     renderPlanning();
+    renderConfirmationQueue();
+    renderPublishingChecklist();
 }
 
 function toggleTheme() {
@@ -774,12 +963,16 @@ function populateConfirmationDropdown() {
             confirmEventSelect.appendChild(option);
         }
     });
+    renderConfirmationQueue();
+    renderPublishingChecklist();
 }
 
 // B. Show event details when the user selects a dropdown item
 if (confirmEventSelect) {
     confirmEventSelect.addEventListener('change', function() {
         const selectedIndex = this.value;
+        const posterWrap = document.getElementById("confirmPosterWrap");
+        const posterImg = document.getElementById("detailPoster");
         
         if (selectedIndex !== "") {
             const selectedEvent = events[selectedIndex];
@@ -787,19 +980,32 @@ if (confirmEventSelect) {
             document.getElementById('detailTime').textContent = selectedEvent.time;
             document.getElementById('detailVenue').textContent = selectedEvent.venue;
             document.getElementById('detailDescription').textContent = selectedEvent.description;
+            if (posterWrap && posterImg) {
+                if (selectedEvent.posterImage) {
+                    posterImg.src = selectedEvent.posterImage;
+                    posterWrap.classList.remove("hidden");
+                } else {
+                    posterImg.removeAttribute("src");
+                    posterWrap.classList.add("hidden");
+                }
+            }
             
             // Unhide the details box
             confirmEventDetails.classList.remove('hidden');
         } else {
             // Hide if they go back to the default placeholder
             confirmEventDetails.classList.add('hidden');
+            if (posterWrap && posterImg) {
+                posterImg.removeAttribute("src");
+                posterWrap.classList.add("hidden");
+            }
         }
     });
 }
 
 // C. Handle the Confirmation Submit
 if (confirmForm) {
-    confirmForm.addEventListener('submit', function(e) {
+    confirmForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const selectedIndex = confirmEventSelect.value;
@@ -824,8 +1030,9 @@ if (confirmForm) {
         } else {
             // Success! Change status
             events[selectedIndex].status = "Confirmed";
-            saveData();
+            await saveData();
             renderEventsTable();
+            renderAllInsights();
             
             // Refresh the dropdown so the confirmed event disappears from the list
             populateConfirmationDropdown(); 
@@ -838,4 +1045,76 @@ if (confirmForm) {
         
         setTimeout(() => msgBox.classList.add('hidden'), 4000);
     });
+}
+
+function renderConfirmationQueue() {
+    const queue = document.getElementById("confirmationQueue");
+    if (!queue) return;
+
+    const pending = events
+        .filter((ev) => ev.status === "Planning")
+        .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date))
+        .slice(0, 5);
+
+    if (!pending.length) {
+        queue.innerHTML = `
+            <div class="queue-item">
+                <div>
+                    <strong>Queue empty</strong>
+                    <p>All planned events are already confirmed.</p>
+                </div>
+                <span class="checklist-mark">0</span>
+            </div>
+        `;
+        return;
+    }
+
+    queue.innerHTML = pending
+        .map((event, idx) => `
+            <div class="queue-item">
+                <div>
+                    <strong>${escapeHtml(event.name)}</strong>
+                    <p>${escapeHtml(event.date)} · ${escapeHtml(event.time)} · ${escapeHtml(event.venue)}</p>
+                </div>
+                <span class="checklist-mark">${idx + 1}</span>
+            </div>
+        `)
+        .join("");
+}
+
+function renderPublishingChecklist() {
+    const checklist = document.getElementById("publishingChecklist");
+    if (!checklist) return;
+
+    const totalPlanning = events.filter((ev) => ev.status === "Planning").length;
+    const withPoster = events.filter((ev) => ev.status === "Planning" && ev.posterImage).length;
+    const withDescription = events.filter((ev) => ev.status === "Planning" && ev.description).length;
+    const confirmed = events.filter((ev) => ev.status === "Confirmed").length;
+
+    const items = [
+        {
+            title: "Posters attached",
+            detail: `${withPoster} of ${totalPlanning} planning events already have a poster uploaded.`
+        },
+        {
+            title: "Descriptions filled",
+            detail: `${withDescription} planning events include a summary for listings and promo copy.`
+        },
+        {
+            title: "Events confirmed",
+            detail: `${confirmed} events are fully confirmed and safe to publish to students.`
+        }
+    ];
+
+    checklist.innerHTML = items
+        .map((item, index) => `
+            <div class="checklist-item">
+                <div>
+                    <strong>${item.title}</strong>
+                    <p>${item.detail}</p>
+                </div>
+                <span class="checklist-mark">${index + 1}</span>
+            </div>
+        `)
+        .join("");
 }
