@@ -74,6 +74,22 @@
                 <div id="planningInsights" class="insight-grid"></div>
 
                 <div class="scheduling-layout">
+                    <div class="card table-card">
+                        <h3>Scheduled Events Database</h3>
+                        <table id="eventsTable" class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Poster</th>
+                                    <th>Event Name</th>
+                                    <th>Date / Time</th>
+                                    <th>Venue</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsTableBody"></tbody>
+                        </table>
+                    </div>
+
                     <div class="card form-card">
                         <h3>Schedule New Event</h3>
                         <form id="eventForm">
@@ -126,23 +142,6 @@
                         <div id="successAlert" class="alert success hidden">
                             <strong>Success!</strong> Event Planned.
                         </div>
-                    </div>
-
-                    <div class="card table-card">
-                        <h3>Scheduled Events Database</h3>
-                        <div id="scheduleBoard" class="schedule-board"></div>
-                        <table id="eventsTable" class="styled-table">
-                            <thead>
-                                <tr>
-                                    <th>Poster</th>
-                                    <th>Event Name</th>
-                                    <th>Date / Time</th>
-                                    <th>Venue</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="eventsTableBody"></tbody>
-                        </table>
                     </div>
                 </div>
             </section>
@@ -299,6 +298,7 @@
                 </header>
 
                 <div id="planningGrid" class="insight-grid"></div>
+                <div id="planningSupportGrid" class="planning-support-grid"></div>
             </section>
         </main>
     </div>

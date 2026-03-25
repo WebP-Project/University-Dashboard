@@ -1,7 +1,7 @@
 [
   {
     "name": "Basketball Finals",
-    "date": "2026-03-06",
+    "date": "2026-03-28",
     "time": "Afternoon",
     "venue": "Sports Complex",
     "status": "Confirmed",
@@ -10,7 +10,7 @@
   },
   {
     "name": "Literature Fest",
-    "date": "2026-03-09",
+    "date": "2026-03-26",
     "time": "Morning",
     "venue": "Conference Hall A",
     "status": "Planning",
@@ -19,7 +19,7 @@
   },
   {
     "name": "Football",
-    "date": "2026-02-19",
+    "date": "2026-03-25",
     "time": "Morning",
     "venue": "Sports Complex",
     "status": "Confirmed",
@@ -28,7 +28,7 @@
   },
   {
     "name": "Annual Debate",
-    "date": "2026-02-21",
+    "date": "2026-03-26",
     "time": "Morning",
     "venue": "Grand Auditorium",
     "status": "Confirmed",
@@ -37,7 +37,7 @@
   },
   {
     "name": "Gen AI Hackathon",
-    "date": "2026-02-22",
+    "date": "2026-03-25",
     "time": "Morning",
     "venue": "Grand Auditorium",
     "status": "Confirmed",
@@ -46,7 +46,7 @@
   },
   {
     "name": "Gaming Event",
-    "date": "2026-02-25",
+    "date": "2026-03-25",
     "time": "Morning",
     "venue": "Grand Auditorium",
     "status": "Confirmed",
@@ -55,7 +55,7 @@
   },
   {
     "name": "Valorant",
-    "date": "2026-02-23",
+    "date": "2026-03-27",
     "time": "Morning",
     "venue": "Conference Hall A",
     "status": "Confirmed",
@@ -64,7 +64,7 @@
   },
   {
     "name": "Research Poster Showcase",
-    "date": "2026-03-12",
+    "date": "2026-03-25",
     "time": "Afternoon",
     "venue": "Conference Hall A",
     "description": "Academic exhibition where students present research posters, receive faculty feedback, and discuss ideas across departments.",

@@ -39,7 +39,7 @@
             <button class="filter-btn active-filter" data-filter="all">All</button>
             <button class="filter-btn" data-filter="upcoming">Upcoming</button>
             <button class="filter-btn" data-filter="ongoing">Ongoing</button>
-            <button class="filter-btn" data-filter="completed">Completed</button>
+            <button class="filter-btn" data-filter="completed">My Registrations</button>
         </div>
 
         <section class="calendar-panel" aria-labelledby="calendarHeading">
@@ -61,6 +61,14 @@
             <div id="eventCalendar" class="event-calendar">
                 <p>Loading calendar...</p>
             </div>
+        </section>
+
+        <section id="notificationPanel" class="notification-panel hidden" aria-live="polite">
+            <div class="notification-panel-header">
+                <h3>Event Reminders</h3>
+                <p>Registered events that are coming up soon.</p>
+            </div>
+            <div id="notificationList" class="notification-list"></div>
         </section>
 
         <div id="eventGrid" class="event-grid">

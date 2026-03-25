@@ -40,6 +40,44 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // --- 2. API ROUTES ---
+app.post('/api/signup', (req, res) => {
+  const { username, email, password, studentId, department } = req.body || {};
+
+  if (!username || !email || !password || !studentId || !department) {
+    return res.status(400).json({ ok: false, error: 'All signup fields are required' });
+  }
+
+  const users = readJsonFile(USERS_FILE, []);
+  const normalizedEmail = String(email).trim().toLowerCase();
+
+  if (users.some((user) => String(user.email).toLowerCase() === normalizedEmail)) {
+    return res.status(409).json({ ok: false, error: 'An account with this email already exists' });
+  }
+
+  const newUser = {
+    id: users.reduce((maxId, user) => Math.max(maxId, Number(user.id) || 0), 0) + 1,
+    email: normalizedEmail,
+    password: String(password),
+    role: 'student',
+    username: String(username).trim(),
+    studentId: String(studentId).trim(),
+    department: String(department).trim()
+  };
+
+  users.push(newUser);
+  writeJsonFile(USERS_FILE, users);
+
+  req.session.user = {
+    username: newUser.username,
+    email: newUser.email,
+    role: newUser.role,
+    studentId: newUser.studentId || '',
+    department: newUser.department || ''
+  };
+
+  return res.json({ ok: true, redirectUrl: '/client.html' });
+});
+
 app.post('/api/login', (req, res) => {
   const { email, password, role } = req.body;
 
@@ -63,7 +101,9 @@ app.post('/api/login', (req, res) => {
     req.session.user = {
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
+      studentId: user.studentId || '',
+      department: user.department || ''
     };
 
     const redirectUrl = user.role === 'admin' ? '/admin/dashboard.html' : '/client.html';

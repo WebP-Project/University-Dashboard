@@ -1,14 +1,38 @@
 [
   {
-    "eventId": "Literature Fest|2026-03-09|Morning|Conference Hall A",
-    "eventName": "Literature Fest",
-    "date": "2026-03-09",
+    "eventId": "Annual Debate|2026-03-26|Morning|Grand Auditorium",
+    "eventName": "Annual Debate",
+    "date": "2026-03-26",
+    "time": "Morning",
+    "venue": "Grand Auditorium",
+    "userName": "student_lead",
+    "userEmail": "student@college.edu",
+    "studentId": "12",
+    "department": "CSC CORE",
+    "registeredAt": "2026-03-25T04:47:50.758Z"
+  },
+  {
+    "eventId": "Valorant|2026-03-27|Morning|Conference Hall A",
+    "eventName": "Valorant",
+    "date": "2026-03-27",
+    "time": "Morning",
+    "venue": "Conference Hall A",
+    "userName": "test_Acc",
+    "userEmail": "student123@college.edu",
+    "studentId": "23BCSE101",
+    "department": "AI ML",
+    "registeredAt": "2026-03-25T05:00:02.421Z"
+  },
+  {
+    "eventId": "Valorant|2026-03-27|Morning|Conference Hall A",
+    "eventName": "Valorant",
+    "date": "2026-03-27",
     "time": "Morning",
     "venue": "Conference Hall A",
     "userName": "student_lead",
     "userEmail": "student@college.edu",
-    "studentId": "123",
-    "department": "CSC CORE",
-    "registeredAt": "2026-02-23T15:45:39.763Z"
+    "studentId": "24BCE1456",
+    "department": "AI DS",
+    "registeredAt": "2026-03-25T07:57:16.164Z"
   }
 ]

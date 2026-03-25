@@ -15,6 +15,11 @@
     </div>
 
     <div class="login-container">
+        <div class="auth-switch" role="tablist" aria-label="Authentication mode">
+            <button id="showLoginBtn" class="auth-switch-btn active-auth" type="button">Login</button>
+            <button id="showSignupBtn" class="auth-switch-btn" type="button">Sign Up</button>
+        </div>
+
         <form id="loginForm" class="login-form">
             <h2>University Event Portal</h2>
             <p>Please login to continue</p>
@@ -39,6 +44,39 @@
 
             <button type="submit" class="login-btn">Login</button>
             <p id="message" class="error-msg"></p>
+        </form>
+
+        <form id="signupForm" class="login-form hidden">
+            <h2>Create Student Account</h2>
+            <p>Sign up to browse and register for confirmed campus events.</p>
+
+            <div class="input-group">
+                <label for="signupName">Full Name</label>
+                <input type="text" id="signupName" required placeholder="Your full name">
+            </div>
+
+            <div class="input-group">
+                <label for="signupEmail">College Email</label>
+                <input type="email" id="signupEmail" required placeholder="name@college.edu">
+            </div>
+
+            <div class="input-group">
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" required placeholder="Create a password">
+            </div>
+
+            <div class="input-group">
+                <label for="signupStudentId">Student ID</label>
+                <input type="text" id="signupStudentId" required placeholder="e.g. 23CSE102">
+            </div>
+
+            <div class="input-group">
+                <label for="signupDepartment">Department</label>
+                <input type="text" id="signupDepartment" required placeholder="e.g. Computer Science">
+            </div>
+
+            <button type="submit" class="login-btn">Create Account</button>
+            <p id="signupMessage" class="error-msg"></p>
         </form>
     </div>
     <script src="js/main.js"></script>

@@ -349,13 +349,22 @@ function renderEventsTable() {
             <tr>
                 <td>${getPosterMarkup(event, `${event.name} poster`)}</td>
                 <td><strong class="event-name-text" title="${escapeHtml(event.name)}">${escapeHtml(event.name)}</strong></td>
-                <td>${escapeHtml(event.date)} (${escapeHtml(event.time)})</td>
-                <td>${escapeHtml(event.venue)}</td>
                 <td>
-                    <span class="status-badge ${event.status === "Confirmed" ? "status-good" : "status-watch"}">${event.status}</span>
-                    <button onclick="deleteEvent(${index})" style="margin-left:10px; color:#e74c3c; background:none; border:none; cursor:pointer; font-weight:bold;">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="event-table-meta">
+                        <span class="event-table-date">${escapeHtml(event.date)}</span>
+                        <span class="event-table-sub">${escapeHtml(event.time)}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="event-table-venue">${escapeHtml(event.venue)}</span>
+                </td>
+                <td>
+                    <div class="event-table-actions">
+                        <span class="status-badge ${event.status === "Confirmed" ? "status-good" : "status-watch"}">${event.status}</span>
+                        <button onclick="deleteEvent(${index})" class="event-delete-btn" aria-label="Delete event">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -378,8 +387,6 @@ function renderEventsTable() {
     confirmedEventsEl.textContent = confirmedCount;
     planningEventsEl.textContent = planningCount;
     }
-
-    renderScheduleBoard();
 }
 
 function showSection(sectionId, navItem) {
@@ -447,36 +454,6 @@ function getMostUsedVenue() {
         counts[ev.venue] = (counts[ev.venue] || 0) + 1;
     });
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
-}
-
-function renderScheduleBoard() {
-    const scheduleBoard = document.getElementById("scheduleBoard");
-    if (!scheduleBoard) return;
-
-    const upcoming = [...events]
-        .filter((ev) => parseEventDate(ev.date))
-        .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date))
-        .slice(0, 3);
-
-    if (!upcoming.length) {
-        scheduleBoard.innerHTML = `
-            <div class="schedule-mini-card">
-                <h4>No scheduled events yet</h4>
-                <p>Once events are added, this space can highlight upcoming posters, venue readiness, and publish status.</p>
-            </div>
-        `;
-        return;
-    }
-
-    scheduleBoard.innerHTML = upcoming
-        .map((event) => `
-            <div class="schedule-mini-card">
-                <h4>${escapeHtml(event.name)}</h4>
-                <p>${escapeHtml(event.date)} · ${escapeHtml(event.time)} · ${escapeHtml(event.venue)}</p>
-                <p>${event.posterImage ? "Poster uploaded and ready for promotion." : "Poster still missing. Add one before publishing."}</p>
-            </div>
-        `)
-        .join("");
 }
 
 function renderBudget() {
@@ -688,7 +665,23 @@ function renderEventOperations() {
     const underUtilized = venueEvents.filter((ev) => ev.utilization <= 35);
     const optimalFit = venueEvents.filter((ev) => ev.utilization > 35 && ev.utilization <= 85);
     const crowded = venueEvents.filter((ev) => ev.utilization > 85);
-    const mostCrowded = [...venueEvents].sort((a, b) => b.projectedAttendance - a.projectedAttendance).slice(0, 3);
+    const roomFitEvents = [...venueEvents].sort((a, b) => {
+        if (a.utilization !== b.utilization) {
+            return a.utilization - b.utilization;
+        }
+        return parseEventDate(a.date) - parseEventDate(b.date);
+    });
+
+    const crowdDensityEvents = [...venueEvents].sort((a, b) => {
+        if (b.projectedAttendance !== a.projectedAttendance) {
+            return b.projectedAttendance - a.projectedAttendance;
+        }
+        return parseEventDate(a.date) - parseEventDate(b.date);
+    });
+
+    const matchedPanelCount = Math.min(2, Math.max(roomFitEvents.length, crowdDensityEvents.length));
+    const visibleRoomFitEvents = roomFitEvents.slice(0, matchedPanelCount);
+    const visibleCrowdDensityEvents = crowdDensityEvents.slice(0, matchedPanelCount);
 
     overview.innerHTML = `
         <div class="card metric-card">
@@ -724,7 +717,7 @@ function renderEventOperations() {
             </div>
         `;
     } else {
-        priorityBoard.innerHTML = venueEvents.slice(0, 5).map((event) => {
+        priorityBoard.innerHTML = visibleRoomFitEvents.map((event) => {
             const recommendation = event.utilization <= 20
                 ? "Move to a smaller hall"
                 : event.utilization <= 35
@@ -732,6 +725,13 @@ function renderEventOperations() {
                     : event.utilization > 85
                         ? "Prepare overflow control"
                         : "Venue fit looks healthy";
+            const reasoning = event.utilization <= 20
+                ? "Large room for current turnout. A smaller hall would feel fuller."
+                : event.utilization <= 35
+                    ? "Slightly oversized venue. Downsizing would improve room efficiency."
+                    : event.utilization > 85
+                        ? "High load. Plan entry flow and overflow handling early."
+                        : "Room size is well matched to projected turnout.";
 
             return `
                 <div class="priority-card">
@@ -739,22 +739,30 @@ function renderEventOperations() {
                     <div class="priority-meta">
                         <span class="priority-tag">${recommendation}</span>
                         <strong>${escapeHtml(event.name)}</strong>
-                        <p>${escapeHtml(event.date)} · ${escapeHtml(event.venue)} · ${event.utilization}% utilized</p>
+                        <p><strong>Date:</strong> ${escapeHtml(event.date)} · <strong>Time:</strong> ${escapeHtml(event.time)}</p>
+                        <p><strong>Venue:</strong> ${escapeHtml(event.venue)}</p>
+                        <p><strong>Zone:</strong> ${escapeHtml(event.zone)}</p>
+                        <p><strong>Attendance:</strong> ${event.projectedAttendance} · <strong>Capacity:</strong> ${event.capacity} · <strong>Load:</strong> ${event.utilization}%</p>
+                        <p class="priority-note">${reasoning}</p>
                     </div>
                 </div>
             `;
         }).join("");
     }
 
-    pressureList.innerHTML = mostCrowded.length
-        ? mostCrowded.map((item) => `
+    pressureList.innerHTML = visibleCrowdDensityEvents.length
+        ? visibleCrowdDensityEvents.map((item) => `
         <div class="pressure-item">
             <div class="pressure-meta">
-                    <strong>${escapeHtml(item.name)}</strong>
-                    <p>${escapeHtml(item.zone)} · ${item.projectedAttendance} expected attendees near ${escapeHtml(item.venue)}</p>
-                </div>
-                <span class="pressure-tag ${item.utilization > 85 ? "high" : item.utilization > 60 ? "mid" : "low"}">${item.utilization > 85 ? "Crowded" : item.utilization > 60 ? "Busy" : "Stable"}</span>
+                <strong>${escapeHtml(item.name)}</strong>
+                <p><strong>Date:</strong> ${escapeHtml(item.date)} · <strong>Time:</strong> ${escapeHtml(item.time)}</p>
+                <p><strong>Venue:</strong> ${escapeHtml(item.venue)}</p>
+                <p><strong>Zone:</strong> ${escapeHtml(item.zone)}</p>
+                <p><strong>Expected Crowd:</strong> ${item.projectedAttendance} · <strong>Load:</strong> ${item.utilization}%</p>
+                <p>${item.utilization > 85 ? "Heavy crowd concentration likely near this venue." : item.utilization > 60 ? "Moderate crowd build-up expected in this zone." : "Crowd movement should remain manageable here."}</p>
             </div>
+            <span class="pressure-tag ${item.utilization > 85 ? "high" : item.utilization > 60 ? "mid" : "low"}">${item.utilization > 85 ? "Crowded" : item.utilization > 60 ? "Busy" : "Stable"}</span>
+        </div>
     `).join("")
         : `
         <div class="pressure-item">
@@ -868,7 +876,8 @@ function renderPerformance() {
 
 function renderPlanning() {
     const planningGrid = document.getElementById("planningGrid");
-    if (!planningGrid) return;
+    const planningSupportGrid = document.getElementById("planningSupportGrid");
+    if (!planningGrid || !planningSupportGrid) return;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -886,6 +895,23 @@ function renderPlanning() {
             <div class="card metric-card">
                 <h4>No Planned Events</h4>
                 <p class="metric-line">Create events in Event Planning to populate this section with real planning data.</p>
+            </div>
+        `;
+        planningSupportGrid.innerHTML = `
+            <div class="card planning-support-card">
+                <span class="planning-pill">Starter Tip</span>
+                <h4>Build a Future Pipeline</h4>
+                <p>Add a few planning-stage events first so this page can generate venue, turnout, and budget suggestions.</p>
+            </div>
+            <div class="card planning-support-card">
+                <span class="planning-pill">Creative</span>
+                <h4>Attach Posters Early</h4>
+                <p>Poster uploads make the planning view more useful because your future event cards can double as promo-ready previews.</p>
+            </div>
+            <div class="card planning-support-card">
+                <span class="planning-pill">Ops</span>
+                <h4>Balance Venues</h4>
+                <p>Spread early planning across venues to avoid repeatedly overloading the same halls and blocks.</p>
             </div>
         `;
         return;
@@ -916,6 +942,39 @@ function renderPlanning() {
             }
         )
         .join("");
+
+    const venueCounts = {};
+    plannedEvents.forEach((ev) => {
+        venueCounts[ev.venue] = (venueCounts[ev.venue] || 0) + 1;
+    });
+
+    const topVenue = Object.entries(venueCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+    const nextTimeSlot = plannedEvents[0]?.time || "Morning";
+    const averageBudget = Math.round(
+        plannedEvents.reduce((sum, _, idx) => sum + (4200 + idx * 850), 0) / Math.max(1, plannedEvents.length)
+    );
+
+    planningSupportGrid.innerHTML = `
+        <div class="card planning-support-card">
+            <span class="planning-pill">Recommendation</span>
+            <h4>Best Venue Focus</h4>
+            <p>${escapeHtml(topVenue)} currently has the strongest upcoming planning momentum. Use it for flagship events and shift smaller ones elsewhere.</p>
+        </div>
+        <div class="card planning-support-card">
+            <span class="planning-pill">Timing</span>
+            <h4>Suggested Slot Pattern</h4>
+            <p>${escapeHtml(nextTimeSlot)} is the leading slot in your current future plan. Keeping a consistent slot can simplify student communication and logistics.</p>
+        </div>
+        <div class="card planning-support-card">
+            <span class="planning-pill">Checklist</span>
+            <h4>Next Planning Actions</h4>
+            <ul>
+                <li>Confirm venue availability for the next two planned events.</li>
+                <li>Lock poster creatives before event confirmation.</li>
+                <li>Keep estimated budgets close to ₹${averageBudget.toLocaleString()} for better variance control.</li>
+            </ul>
+        </div>
+    `;
 }
 
 function renderAllInsights() {

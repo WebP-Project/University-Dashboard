@@ -1,4 +1,7 @@
 const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const showLoginBtn = document.getElementById('showLoginBtn');
+const showSignupBtn = document.getElementById('showSignupBtn');
 const eventGrid = document.getElementById('eventGrid');
 const logoutLink = document.querySelector('.logout-link');
 const eventsHeading = document.getElementById('eventsHeading');
@@ -14,6 +17,8 @@ const registrationMessage = document.getElementById('registrationMessage');
 const registrationSuccess = document.getElementById('registrationSuccess');
 const profileToggleBtn = document.getElementById('profileToggleBtn');
 const profilePanel = document.getElementById('profilePanel');
+const notificationPanel = document.getElementById('notificationPanel');
+const notificationList = document.getElementById('notificationList');
 
 let allClientEvents = [];
 let currentEventFilter = 'all';
@@ -30,9 +35,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     bindProfilePanel();
+    bindAuthModeToggle();
 
     if (loginForm) {
         bindLogin();
+    }
+
+    if (signupForm) {
+        bindSignup();
     }
 
     if (logoutLink) {
@@ -85,6 +95,53 @@ function bindLogin() {
     });
 }
 
+function bindAuthModeToggle() {
+    if (!showLoginBtn || !showSignupBtn || !loginForm || !signupForm) return;
+
+    const setMode = (mode) => {
+        const loginActive = mode === 'login';
+        loginForm.classList.toggle('hidden', !loginActive);
+        signupForm.classList.toggle('hidden', loginActive);
+        showLoginBtn.classList.toggle('active-auth', loginActive);
+        showSignupBtn.classList.toggle('active-auth', !loginActive);
+    };
+
+    showLoginBtn.addEventListener('click', () => setMode('login'));
+    showSignupBtn.addEventListener('click', () => setMode('signup'));
+}
+
+function bindSignup() {
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('signupName')?.value.trim() || '';
+        const email = document.getElementById('signupEmail')?.value.trim() || '';
+        const password = document.getElementById('signupPassword')?.value || '';
+        const studentId = document.getElementById('signupStudentId')?.value.trim() || '';
+        const department = document.getElementById('signupDepartment')?.value.trim() || '';
+        const msgElement = document.getElementById('signupMessage');
+
+        try {
+            const response = await fetch('/api/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, studentId, department })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                if (msgElement) msgElement.textContent = data.error || 'Signup failed.';
+                return;
+            }
+
+            window.location.href = data.redirectUrl || '/client.html';
+        } catch (err) {
+            console.error('Signup failed', err);
+            if (msgElement) msgElement.textContent = 'Server error. Please try again.';
+        }
+    });
+}
+
 function bindLogout() {
     logoutLink.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -129,11 +186,15 @@ async function fetchEvents() {
             fetch('/api/registrations')
         ]);
 
-        allClientEvents = await eventsResponse.json();
+        const rawEvents = await eventsResponse.json();
+        allClientEvents = Array.isArray(rawEvents)
+            ? rawEvents.filter((event) => event.status === 'Confirmed')
+            : [];
         const registrations = registrationsResponse.ok ? await registrationsResponse.json() : [];
         currentUserRegistrations = getCurrentUserRegistrations(registrations);
 
         renderRegistrationCalendar();
+        renderEventReminders();
         renderFilteredEvents();
     } catch (err) {
         console.error('Error loading events:', err);
@@ -207,6 +268,11 @@ function getCurrentUserRegistrations(registrations) {
 
     const userEmail = currentUser.email.toLowerCase();
     return registrations.filter((item) => (item.userEmail || '').toLowerCase() === userEmail);
+}
+
+function getRegisteredEvents() {
+    const registeredIds = new Set(currentUserRegistrations.map((registration) => registration.eventId));
+    return allClientEvents.filter((event) => registeredIds.has(getEventId(event)));
 }
 
 function renderRegistrationCalendar() {
@@ -314,12 +380,31 @@ function getEventDisplayMeta(event, registeredEventIds) {
     }
 
     if (eventState === 'ongoing') {
+        if (isRegistered) {
+            return {
+                eventState,
+                canRegister: false,
+                statusClass: 'status-registered',
+                statusLabel: 'REGISTERED',
+                actionLabel: 'Already Registered'
+            };
+        }
         return {
             eventState,
             canRegister: false,
             statusClass: 'status-ongoing',
             statusLabel: 'ONGOING',
             actionLabel: 'In Progress'
+        };
+    }
+
+    if (isRegistered) {
+        return {
+            eventState,
+            canRegister: false,
+            statusClass: 'status-registered',
+            statusLabel: 'REGISTERED',
+            actionLabel: 'Already Registered'
         };
     }
 
@@ -338,6 +423,69 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function renderEventReminders() {
+    if (!notificationPanel || !notificationList) return;
+
+    const now = new Date();
+    const reminders = getRegisteredEvents()
+        .filter((event) => getEventState(event.date) === 'upcoming')
+        .map((event) => ({
+            ...event,
+            eventDate: parseLocalDate(event.date)
+        }))
+        .filter((event) => !Number.isNaN(event.eventDate.getTime()))
+        .filter((event) => {
+            const diffMs = event.eventDate.getTime() - now.getTime();
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            return diffDays > 0 && diffDays <= 1.5;
+        })
+        .sort((a, b) => a.eventDate - b.eventDate);
+
+    if (!reminders.length) {
+        notificationPanel.classList.add('hidden');
+        notificationList.innerHTML = '';
+        return;
+    }
+
+    notificationPanel.classList.remove('hidden');
+    notificationList.innerHTML = reminders
+        .map((event) => `
+            <div class="notification-item">
+                <strong>${escapeHtml(event.name)} is tomorrow</strong>
+                <p>${escapeHtml(event.date)} · ${escapeHtml(event.time || 'TBA')}</p>
+                <p>${escapeHtml(event.venue)}</p>
+            </div>
+        `)
+        .join('');
+
+    triggerBrowserReminders(reminders);
+}
+
+function triggerBrowserReminders(events) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+        return;
+    }
+    if (Notification.permission !== 'granted') return;
+
+    const reminderStore = JSON.parse(localStorage.getItem('student_event_reminders') || '{}');
+
+    events.forEach((event) => {
+        const reminderKey = `${getEventId(event)}|${event.date}`;
+        if (reminderStore[reminderKey]) return;
+
+        new Notification('Event Reminder', {
+            body: `${event.name} is tomorrow at ${event.time || 'TBA'} in ${event.venue}.`,
+            tag: reminderKey
+        });
+
+        reminderStore[reminderKey] = true;
+    });
+
+    localStorage.setItem('student_event_reminders', JSON.stringify(reminderStore));
 }
 
 function resolvePosterSrc(posterImage) {
@@ -364,14 +512,12 @@ function renderFilteredEvents() {
     const filteredEvents = allClientEvents.filter((event) => {
         if (currentEventFilter === 'all') return true;
 
-        const eventState = getEventState(event.date);
-        if (eventState !== currentEventFilter) return false;
-
         if (currentEventFilter === 'completed') {
             return registeredEventIds.has(getEventId(event));
         }
 
-        return true;
+        const eventState = getEventState(event.date);
+        return eventState === currentEventFilter;
     });
 
     eventGrid.innerHTML = '';
@@ -381,7 +527,7 @@ function renderFilteredEvents() {
             all: 'All',
             upcoming: 'Upcoming',
             ongoing: 'Ongoing',
-            completed: 'Completed'
+            completed: 'My Registered & Completed'
         };
         const title = headingMap[currentEventFilter] || 'All';
         eventsHeading.textContent = `${title} Events`;
@@ -389,7 +535,7 @@ function renderFilteredEvents() {
 
     if (!filteredEvents.length) {
         const emptyLabel = currentEventFilter === 'completed'
-            ? 'registered completed events'
+            ? 'registered events'
             : currentEventFilter === 'all'
                 ? 'events'
                 : `${currentEventFilter} events`;
@@ -403,7 +549,7 @@ function renderFilteredEvents() {
         const posterSrc = resolvePosterSrc(event.posterImage);
 
         const card = document.createElement('div');
-        card.className = 'event-card';
+        card.className = `event-card ${eventDisplay.statusClass === 'status-registered' ? 'event-card-registered' : ''} ${eventDisplay.statusClass === 'status-completed' ? 'event-card-completed' : ''}`;
         card.innerHTML = `
             ${posterSrc ? `<img class="event-poster" src="${posterSrc}" alt="${escapeHtml(event.name)} poster">` : ''}
             <div class="event-content">
@@ -454,7 +600,7 @@ async function initRegistrationPage() {
     try {
         const response = await fetch('/api/events');
         const events = await response.json();
-        selectedRegistrationEvent = events.find((item) => getEventId(item) === selectedId) || null;
+        selectedRegistrationEvent = events.find((item) => getEventId(item) === selectedId && item.status === 'Confirmed') || null;
     } catch (err) {
         console.error('Failed to load events for registration page', err);
     }
@@ -492,7 +638,7 @@ function renderRegistrationEventDetails() {
     const eventState = getEventState(selectedRegistrationEvent.date);
     const posterSrc = resolvePosterSrc(selectedRegistrationEvent.posterImage);
     registrationEventBox.innerHTML = `
-        ${posterSrc ? `<img class="event-poster" src="${posterSrc}" alt="${escapeHtml(selectedRegistrationEvent.name)} poster">` : ''}
+        ${posterSrc ? `<img class="registration-poster-full" src="${posterSrc}" alt="${escapeHtml(selectedRegistrationEvent.name)} poster">` : ''}
         <span class="event-status status-${eventState}">${eventState.toUpperCase()}</span>
         <h3>${escapeHtml(selectedRegistrationEvent.name)}</h3>
         <p><strong>Date:</strong> ${escapeHtml(selectedRegistrationEvent.date)}</p>
@@ -507,9 +653,13 @@ function prefillRegistrationUser() {
 
     const nameInput = document.getElementById('regName');
     const emailInput = document.getElementById('regEmail');
+    const studentIdInput = document.getElementById('regStudentId');
+    const departmentInput = document.getElementById('regDepartment');
 
     if (nameInput) nameInput.value = currentUser.username || '';
     if (emailInput) emailInput.value = currentUser.email || '';
+    if (studentIdInput) studentIdInput.value = currentUser.studentId || '';
+    if (departmentInput) departmentInput.value = currentUser.department || '';
 }
 
 function bindProfilePanel() {
@@ -532,6 +682,14 @@ function setRegistrationMessage(text, type) {
     if (!registrationMessage) return;
     registrationMessage.className = type === 'error' ? 'error-msg' : 'success-msg';
     registrationMessage.textContent = text;
+
+    if (registrationForm) {
+        const panel = registrationForm.closest('.register-panel');
+        if (panel) {
+            panel.classList.remove('registration-panel-success', 'registration-panel-error');
+            panel.classList.add(type === 'error' ? 'registration-panel-error' : 'registration-panel-success');
+        }
+    }
 }
 
 function handleRegistrationSubmit(e) {
@@ -592,24 +750,34 @@ async function submitRegistration(registration) {
 
         setRegistrationMessage('Registration confirmed successfully.', 'success');
 
-        if (registrationSuccess) {
-            registrationSuccess.classList.remove('hidden');
-            registrationSuccess.innerHTML = `
-                <h3>Registration Confirmed</h3>
-                <p><strong>Name:</strong> ${registration.userName}</p>
-                <p><strong>Email:</strong> ${registration.userEmail}</p>
-                <p><strong>Student ID:</strong> ${registration.studentId}</p>
-                <p><strong>Department:</strong> ${registration.department}</p>
-                <hr>
-                <p><strong>Event:</strong> ${registration.eventName}</p>
-                <p><strong>Date:</strong> ${registration.date}</p>
-                <p><strong>Time:</strong> ${registration.time}</p>
-                <p><strong>Venue:</strong> ${registration.venue}</p>
+    if (registrationSuccess) {
+        registrationSuccess.classList.remove('hidden');
+        const posterSrc = resolvePosterSrc(selectedRegistrationEvent?.posterImage);
+        registrationSuccess.innerHTML = `
+                <div class="registration-success-layout">
+                    <div>
+                        ${posterSrc ? `<img class="registration-success-poster" src="${posterSrc}" alt="${escapeHtml(registration.eventName)} poster">` : ''}
+                    </div>
+                    <div class="registration-success-copy">
+                        <h3>Registration Confirmed</h3>
+                        <p><strong>Name:</strong> ${registration.userName}</p>
+                        <p><strong>Email:</strong> ${registration.userEmail}</p>
+                        <p><strong>Student ID:</strong> ${registration.studentId}</p>
+                        <p><strong>Department:</strong> ${registration.department}</p>
+                        <hr>
+                        <p><strong>Event:</strong> ${registration.eventName}</p>
+                        <p><strong>Date:</strong> ${registration.date}</p>
+                        <p><strong>Time:</strong> ${registration.time}</p>
+                        <p><strong>Venue:</strong> ${registration.venue}</p>
+                    </div>
+                </div>
             `;
         }
 
         currentUserRegistrations = [...currentUserRegistrations, registration];
         renderRegistrationCalendar();
+        renderEventReminders();
+        renderFilteredEvents();
     } catch (err) {
         console.error('Registration submit failed', err);
         setRegistrationMessage('Registration failed. Please try again.', 'error');

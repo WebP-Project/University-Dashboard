@@ -303,6 +303,13 @@ textarea,
     margin-bottom: 0;
 }
 
+.kpi-grid > .card,
+.insight-grid > .card,
+.planning-support-grid > .card,
+.scheduling-layout > .card {
+    height: 100%;
+}
+
 .kpi h3 {
     color: var(--text-muted);
     font-size: 0.95rem;
@@ -364,9 +371,26 @@ textarea,
 
 .scheduling-layout {
     display: grid;
-    grid-template-columns: 0.85fr 1.65fr;
+    grid-template-columns: 1fr;
     gap: 22px;
-    align-items: start;
+    align-items: stretch;
+}
+
+.form-card,
+.table-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-card form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.table-card .styled-table {
+    flex: 1;
+    min-width: 100%;
 }
 
 .confirmation-layout {
@@ -609,7 +633,7 @@ textarea,
 .styled-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
 }
 
 .styled-table th,
@@ -638,25 +662,23 @@ textarea,
 
 #eventsTable th:nth-child(2),
 #eventsTable td:nth-child(2) {
-    width: 26%;
-    white-space: nowrap;
+    width: 22%;
 }
 
 #eventsTable th:nth-child(3),
 #eventsTable td:nth-child(3) {
-    width: 22%;
-    white-space: nowrap;
+    width: 26%;
 }
 
 #eventsTable th:nth-child(4),
 #eventsTable td:nth-child(4) {
-    width: 20%;
+    width: 24%;
     white-space: nowrap;
 }
 
 #eventsTable th:nth-child(5),
 #eventsTable td:nth-child(5) {
-    width: 20%;
+    width: 16%;
     white-space: nowrap;
 }
 
@@ -714,6 +736,54 @@ textarea,
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.event-table-meta {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.event-table-date {
+    color: var(--text-main);
+    font-weight: 600;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.event-table-sub,
+.event-table-venue {
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.event-table-sub {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.event-table-venue {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.event-table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.event-delete-btn {
+    color: #e74c3c;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .charts-grid {
@@ -776,9 +846,16 @@ textarea,
 
 .operations-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 22px;
     margin-bottom: 0;
+    align-items: stretch;
+}
+
+.operations-layout > .card {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
 }
 
 .ops-board,
@@ -786,6 +863,15 @@ textarea,
 .creative-grid {
     display: grid;
     gap: 20px;
+}
+
+.ops-board,
+.ops-stack {
+    flex: 1;
+    align-content: start;
+    overflow: visible;
+    max-height: none;
+    padding-right: 0;
 }
 
 .operations-layout .card h3,
@@ -801,7 +887,7 @@ textarea,
     border: 1px solid var(--border-color);
     border-radius: 14px;
     background: var(--bg-body);
-    padding: 20px;
+    padding: 18px 20px;
 }
 
 .priority-card:hover,
@@ -813,14 +899,15 @@ textarea,
 
 .priority-card {
     display: grid;
-    grid-template-columns: 72px 1fr;
-    gap: 18px;
-    align-items: center;
+    grid-template-columns: 68px 1fr;
+    gap: 14px;
+    align-items: start;
+    min-height: 100%;
 }
 
 .priority-poster {
-    width: 72px;
-    height: 96px;
+    width: 68px;
+    height: 88px;
     object-fit: cover;
     border-radius: 12px;
     border: 1px solid var(--border-color);
@@ -831,7 +918,54 @@ textarea,
 .pressure-meta,
 .creative-meta {
     display: grid;
-    gap: 10px;
+    gap: 8px;
+    min-width: 0;
+    align-content: start;
+}
+
+.priority-meta p,
+.pressure-meta p {
+    color: var(--text-muted);
+    line-height: 1.45;
+    font-size: 0.88rem;
+    margin: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.priority-note {
+    margin-top: 2px !important;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(251, 191, 36, 0.22);
+    background: rgba(251, 191, 36, 0.08);
+    color: #fbbf24;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.priority-meta strong,
+.pressure-meta strong {
+    font-size: 0.98rem;
+    line-height: 1.3;
+}
+
+.priority-meta p strong,
+.pressure-meta p strong {
+    color: var(--text-main);
+    font-size: 0.88rem;
+}
+
+.pressure-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 100%;
+}
+
+.pressure-tag {
+    align-self: flex-start;
 }
 
 .priority-tag,
@@ -909,7 +1043,7 @@ textarea,
 .pressure-item,
 .creative-card {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .priority-card:hover::before,
@@ -966,6 +1100,47 @@ textarea,
     border-radius: 12px;
     border: 1px solid var(--border-color);
     background: var(--bg-card);
+}
+
+.planning-support-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.planning-support-card {
+    display: grid;
+    gap: 14px;
+}
+
+.planning-support-card h4 {
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.planning-support-card p,
+.planning-support-card li {
+    color: var(--text-muted);
+    line-height: 1.5;
+    font-size: 0.92rem;
+}
+
+.planning-support-card ul {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+}
+
+.planning-pill {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary-color);
+    font-size: 0.78rem;
+    font-weight: 700;
 }
 
 .confirm-details,
@@ -1040,7 +1215,7 @@ textarea,
 .preview-card {
     display: grid;
     grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
-    gap: 28px;
+    gap: 30px;
     align-items: stretch;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -1052,6 +1227,11 @@ textarea,
 .preview-poster-panel,
 .preview-details-panel {
     min-width: 0;
+}
+
+.preview-poster-panel {
+    display: grid;
+    gap: 18px;
 }
 
 .preview-poster,
@@ -1082,6 +1262,31 @@ textarea,
     gap: 18px;
 }
 
+.preview-poster-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.preview-poster-stat {
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-body);
+}
+
+.preview-poster-stat span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+}
+
+.preview-poster-stat strong {
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
 .preview-details-panel h1 {
     font-size: 2.2rem;
     line-height: 1.15;
@@ -1093,7 +1298,31 @@ textarea,
     line-height: 1.7;
 }
 
+.preview-highlight-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.preview-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
 .preview-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.preview-detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
@@ -1117,6 +1346,42 @@ textarea,
     line-height: 1.5;
 }
 
+.preview-detail-card {
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-body);
+}
+
+.preview-detail-card h3 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.preview-list {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+}
+
+.preview-list li {
+    color: var(--text-muted);
+    line-height: 1.55;
+    padding-left: 16px;
+    position: relative;
+}
+
+.preview-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--primary-color);
+}
+
 .preview-empty {
     padding: 28px;
 }
@@ -1136,6 +1401,10 @@ textarea,
     }
 
     .operations-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .planning-support-grid {
         grid-template-columns: 1fr;
     }
 
@@ -1196,6 +1465,11 @@ textarea,
     .preview-card {
         grid-template-columns: 1fr;
         padding: 18px;
+    }
+
+    .preview-poster-meta,
+    .preview-detail-grid {
+        grid-template-columns: 1fr;
     }
 
     .preview-poster,

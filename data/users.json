@@ -2,7 +2,7 @@
   {
     "id": 1,
     "email": "admin@college.edu",
-    "password": "admin123", 
+    "password": "admin123",
     "role": "admin",
     "username": "admin"
   },
@@ -11,6 +11,17 @@
     "email": "student@college.edu",
     "password": "securePass1",
     "role": "student",
-    "username": "student_lead"
+    "username": "student_lead",
+    "studentId": "24BAI102",
+    "department": "AI DS"
+  },
+  {
+    "id": 3,
+    "email": "student123@college.edu",
+    "password": "123",
+    "role": "student",
+    "username": "test_Acc",
+    "studentId": "23CSE102",
+    "department": "AI ML"
   }
 ]

@@ -98,6 +98,29 @@
     z-index: 2;
 }
 
+.auth-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1.3rem;
+}
+
+.auth-switch-btn {
+    border: 1px solid rgba(148, 163, 184, 0.42);
+    background: rgba(15, 23, 42, 0.38);
+    color: #e2e8f0;
+    border-radius: 999px;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.active-auth {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    border-color: transparent;
+    color: #fff;
+}
+
 .login-body .login-form h2 {
     color: #f8fafc;
 }
@@ -159,9 +182,19 @@
     background: #fff;
 }
 
+.input-group input[readonly] {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--text-main);
+    cursor: not-allowed;
+}
+
 [data-theme="dark"] .input-group input,
 [data-theme="dark"] .input-group select {
     background: #0f172a;
+}
+
+[data-theme="dark"] .input-group input[readonly] {
+    background: rgba(51, 65, 85, 0.55);
 }
 
 .login-btn {
@@ -295,6 +328,53 @@ header {
     padding: 1rem;
     margin-bottom: 1.5rem;
     overflow-x: auto;
+}
+
+.notification-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.1rem;
+    margin-bottom: 1.4rem;
+}
+
+.notification-panel-header {
+    margin-bottom: 0.9rem;
+}
+
+.notification-panel-header h3 {
+    margin: 0 0 0.25rem;
+}
+
+.notification-panel-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.notification-list {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.notification-item {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.9rem;
+    background: var(--primary-soft);
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification-item strong {
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.notification-item p {
+    margin: 0.18rem 0;
+    color: var(--text-muted);
+    font-size: 0.88rem;
 }
 
 .calendar-panel-header {
@@ -469,6 +549,15 @@ header {
     box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
 }
 
+.event-card-registered {
+    border-color: rgba(15, 118, 110, 0.45);
+    box-shadow: 0 14px 30px rgba(15, 118, 110, 0.12);
+}
+
+.event-card-completed {
+    border-color: rgba(148, 163, 184, 0.45);
+}
+
 .event-poster {
     width: 100%;
     height: 190px;
@@ -479,6 +568,17 @@ header {
 
 .event-content {
     padding: 1.2rem;
+}
+
+.registration-poster-full {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: rgba(15, 23, 42, 0.05);
+    padding: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .event-card h3 {
@@ -525,6 +625,11 @@ header {
     color: var(--status-ended-text);
 }
 
+.status-registered {
+    background: rgba(15, 118, 110, 0.16);
+    color: var(--primary-color);
+}
+
 .register-btn {
     background: var(--primary-color);
     color: white;
@@ -553,21 +658,91 @@ header {
 .register-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 1.4rem;
+    margin-bottom: 1.3rem;
 }
 
 .register-panel h3 {
     margin-top: 0;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
 }
 
 #registrationEventBox p {
-    margin: 0.3rem 0;
+    margin: 0.45rem 0;
+    line-height: 1.6;
+}
+
+#registrationEventBox h3 {
+    margin-bottom: 0.8rem;
+}
+
+#registrationForm {
+    display: grid;
+    gap: 0.25rem;
+}
+
+#registrationPage .register-panel {
+    padding: 1.4rem;
+    transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.registration-panel-success {
+    border-color: rgba(22, 163, 74, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14), 0 16px 32px rgba(22, 163, 74, 0.1) !important;
+}
+
+.registration-panel-error {
+    border-color: rgba(220, 38, 38, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14), 0 16px 32px rgba(220, 38, 38, 0.1) !important;
+}
+
+#registrationMessage {
+    margin-top: 1rem;
+    border-radius: 12px;
+    padding: 0.95rem 1rem;
+    border: 1px solid transparent;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+#registrationMessage.error-msg {
+    color: #dc2626;
+    border-color: rgba(220, 38, 38, 0.45);
+    background: rgba(220, 38, 38, 0.08);
+}
+
+#registrationMessage.success-msg {
+    color: #16a34a;
+    border-color: rgba(22, 163, 74, 0.45);
+    background: rgba(22, 163, 74, 0.08);
 }
 
 #registrationSuccess {
     border-left: 4px solid var(--primary-color);
+    padding: 1.4rem;
+    margin-top: 1rem;
+}
+
+.registration-success-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.registration-success-poster {
+    width: 100%;
+    max-height: 360px;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: rgba(15, 23, 42, 0.05);
+    padding: 0.5rem;
+}
+
+.registration-success-copy p {
+    margin: 0.45rem 0;
+    line-height: 1.55;
 }
 
 .success-msg {
@@ -609,5 +784,9 @@ header {
 
     .calendar-day {
         min-height: 110px;
+    }
+
+    .registration-success-layout {
+        grid-template-columns: 1fr;
     }
 }
