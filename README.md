@@ -1,35 +1,124 @@
 # UniEvent - University Event Management System
 
-UniEvent is a comprehensive, dual-interface frontend application designed to bridge the gap between university event organizers and the student body. It provides administrators with powerful tools to plan events and prevent venue clashes, while offering students a seamless platform to discover and register for campus activities.
+UniEvent is a dual-interface event planning platform for universities. It gives admins a dashboard to schedule, confirm, and analyze events, while students get a separate portal to discover confirmed events, register, and track completed participation.
 
-## 🚀 Key Features
+## Key Features
 
-### Dual-Role Architecture
-* **Admin Dashboard:** An interface for university staff to manage the entire event lifecycle.
-* **Student Portal:** A clean, user-friendly frontend where students can view and register for upcoming events.
+### Admin Dashboard
+- Schedule new events with poster upload
+- Save event data in `data/events.json`
+- Review and confirm planned events
+- Prevent venue and time-slot clashes
+- View budget, participation, performance, and venue optimization insights
+- Open a full event preview page from the event poster
 
-### Administrator Tools
-* **Event Pipeline Management:** Distinct workflows for "Event Planning" (drafting) and "Event Confirmation" (finalizing).
-* **Intelligent Clash Detection:** Automatically prevents double-booking of venues and time slots by checking against officially confirmed events.
-* **Dynamic Confirmation System:** Select from a dynamically generated dropdown of planned events to review details before final confirmation.
-* **Real-Time Analytics:** Dashboard metrics track the current number of "Confirmed Events" and "Planning Events."
+### Student Portal
+- Login or sign up as a new student
+- View only confirmed events
+- Register for events with auto-filled student details
+- See registered and completed events with posters
+- Get reminder notifications for registered events 1 day before the event
 
-### Student Experience
-* **Live Event Feed:** Students only see events that have passed the "Planning" phase and are officially "Confirmed" by administrators.
-* **Seamless Registration:** One-click registration for students to secure their spot at campus events.
+## Tech Stack
 
-## 🛠️ Tech Stack
+- Frontend: HTML, CSS, Vanilla JavaScript
+- Backend: Node.js, Express
+- Storage: Local JSON files (`events.json`, `users.json`, `registrations.json`)
 
-* **Frontend:** HTML5, CSS3 (CSS Variables for theming), Vanilla JavaScript
+## Prerequisites
 
-## ⚙️ Prerequisites
+- Node.js 18+ recommended
+- npm
+- A modern browser
+- Git (optional, only needed if you are cloning the repo)
 
-* A modern web browser (Chrome, Firefox, Edge, Safari)
-* Git (optional, for cloning the repository)
+## Installation & Setup
 
-## 📥 Installation & Setup
+1. Clone the repository:
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/YourUsername/University-Dashboard.git](https://github.com/YourUsername/University-Dashboard.git)
-   cd University-Dashboard
+```bash
+git clone https://github.com/WebP-Project/University-Dashboard.git
+cd University-Dashboard
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Start the server:
+
+```bash
+npm start
+```
+
+4. Open the app in your browser:
+
+- Login page: `http://localhost:3000/login.html`
+- Student portal: `http://localhost:3000/client.html`
+- Admin dashboard: `http://localhost:3000/admin/dashboard.html`
+
+## Demo Credentials
+
+### Admin
+- Email: `admin@college.edu`
+- Password: `admin123`
+
+### Student
+- Email: `student@college.edu`
+- Password: `securePass1`
+
+You can also create a new student account from the Sign Up tab on the login page.
+
+## Project Structure
+
+```text
+University-Dashboard/
+├── admin/
+│   ├── css/
+│   ├── js/
+│   ├── dashboard.html
+│   └── event-preview.html
+├── data/
+│   ├── events.json
+│   ├── registrations.json
+│   └── users.json
+├── public/
+│   ├── css/
+│   ├── js/
+│   ├── client.html
+│   ├── login.html
+│   └── register.html
+├── server.js
+├── package.json
+└── README.md
+```
+
+## How Data Is Stored
+
+- `data/events.json`: stores event details, status, venue, time slot, and poster image path/data
+- `data/registrations.json`: stores student registrations
+- `data/users.json`: stores admin and student login records
+
+## Notes
+
+- Uploaded posters are served from `data/posters/`
+- Students only see events whose status is `Confirmed`
+- Session-based login is used with `express-session`
+- Browser notifications depend on the user granting notification permission
+
+## Available Scripts
+
+```bash
+npm start
+```
+
+Starts the Express server on port `3000`.
+
+## Future Improvements
+
+- Password hashing for better security
+- Database integration instead of local JSON storage
+- Email reminders for registered events
+- Search, filters, and role-based analytics expansion
