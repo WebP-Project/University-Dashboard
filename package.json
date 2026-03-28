@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/WebP-Project/University-Dashboard#readme",
   "dependencies": {
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "mongodb": "^6.16.0"
