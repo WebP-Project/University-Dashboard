@@ -314,8 +314,13 @@ app.post('/api/signup', async (req, res, next) => {
       createdAt: new Date()
     };
 
-    const result = await users.insertOne(newUser);
-    const createdUser = { ...newUser, _id: result.insertedId };
+    await users.updateOne(
+      { email: normalizedEmail },
+      { $setOnInsert: newUser },
+      { upsert: true }
+    );
+
+    const createdUser = await users.findOne({ email: normalizedEmail });
 
     setAuthCookie(res, createdUser);
     return res.json({ ok: true, redirectUrl: '/client.html' });
@@ -475,7 +480,14 @@ app.post('/api/registrations', requireAuth, async (req, res, next) => {
       registeredAt: new Date()
     };
 
-    await registrations.insertOne(newRegistration);
+    await registrations.updateOne(
+  {
+    eventId: sanitizeText(eventId, 240),
+    userEmail: normalizedEmail
+  },
+  { $setOnInsert: newRegistration },
+  { upsert: true }
+);
     return res.json({
       ok: true,
       registration: {
