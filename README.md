@@ -6,7 +6,7 @@ UniEvent is a dual-interface event planning platform for universities. It gives 
 
 ### Admin Dashboard
 - Schedule new events with poster upload
-- Save event data in `data/events.json`
+- Save event data in MongoDB
 - Review and confirm planned events
 - Prevent venue and time-slot clashes
 - View budget, participation, performance, and venue optimization insights
@@ -23,12 +23,14 @@ UniEvent is a dual-interface event planning platform for universities. It gives 
 
 - Frontend: HTML, CSS, Vanilla JavaScript
 - Backend: Node.js, Express
-- Storage: Local JSON files (`events.json`, `users.json`, `registrations.json`)
+- Database: MongoDB
+- Hosting Target: Vercel-compatible Express API
 
 ## Prerequisites
 
 - Node.js 18+ recommended
 - npm
+- MongoDB Atlas connection string
 - A modern browser
 - Git (optional, only needed if you are cloning the repo)
 
@@ -47,13 +49,27 @@ cd University-Dashboard
 npm install
 ```
 
-3. Start the server:
+3. Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Set:
+
+- `MONGODB_URI`
+- `MONGODB_DB`
+- `AUTH_SECRET`
+
+4. Start the server:
 
 ```bash
 npm start
 ```
 
-4. Open the app in your browser:
+`.env` is loaded automatically for local runs. Hosted environments such as Vercel should use their own configured project environment variables instead.
+
+5. Open the app in your browser:
 
 - Login page: `http://localhost:3000/login.html`
 - Student portal: `http://localhost:3000/client.html`
@@ -75,6 +91,8 @@ You can also create a new student account from the Sign Up tab on the login page
 
 ```text
 University-Dashboard/
+├── api/
+│   └── index.js
 ├── admin/
 │   ├── css/
 │   ├── js/
@@ -82,31 +100,50 @@ University-Dashboard/
 │   └── event-preview.html
 ├── data/
 │   ├── events.json
+│   ├── posters/
 │   ├── registrations.json
 │   └── users.json
+├── lib/
+│   └── db.js
 ├── public/
 │   ├── css/
 │   ├── js/
 │   ├── client.html
 │   ├── login.html
 │   └── register.html
+├── app.js
 ├── server.js
+├── vercel.json
 ├── package.json
 └── README.md
 ```
 
 ## How Data Is Stored
 
-- `data/events.json`: stores event details, status, venue, time slot, and poster image path/data
-- `data/registrations.json`: stores student registrations
-- `data/users.json`: stores admin and student login records
+- MongoDB stores users, events, and registrations
+- Existing `data/*.json` files are used only as initial seed data when the database is empty
+- Poster files inside `data/posters/` are still served as static assets
 
 ## Notes
 
 - Uploaded posters are served from `data/posters/`
 - Students only see events whose status is `Confirmed`
-- Session-based login is used with `express-session`
+- Authentication uses a signed HTTP-only cookie
 - Browser notifications depend on the user granting notification permission
+
+## Vercel Deployment
+
+1. Push this repo to GitHub.
+2. Create a MongoDB Atlas database.
+3. In Vercel, import the repo.
+4. Add these environment variables in the Vercel project settings:
+   - `MONGODB_URI`
+   - `MONGODB_DB`
+   - `AUTH_SECRET`
+   - `NODE_ENV=production`
+5. Deploy.
+
+The app is configured so all routes are served through `api/index.js` on Vercel.
 
 ## Available Scripts
 
@@ -118,7 +155,5 @@ Starts the Express server on port `3000`.
 
 ## Future Improvements
 
-- Password hashing for better security
-- Database integration instead of local JSON storage
 - Email reminders for registered events
 - Search, filters, and role-based analytics expansion
