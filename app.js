@@ -1,3 +1,4 @@
+const cookieParser = require("cookie-parser");
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -6,7 +7,7 @@ const { ObjectId } = require('mongodb');
 const { getDb } = require('./lib/db');
 
 const app = express();
-
+app.use(cookieParser());
 const IS_PROD = process.env.NODE_ENV === 'production';
 const AUTH_COOKIE_NAME = 'unievent_auth';
 const AUTH_MAX_AGE_MS = 1000 * 60 * 60 * 12;
